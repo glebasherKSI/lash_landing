@@ -7,6 +7,7 @@ import { Eta } from 'eta';
 import { ROOT, config } from './config.js';
 import { cookieMiddleware } from './lib/cookies.js';
 import { csrfToken } from './lib/csrf.js';
+import { ASSET_PREFIX, asset } from './lib/assets.js';
 import { apiRouter } from './routes/api.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
@@ -47,11 +48,22 @@ app.use(
   }),
 );
 
+// Статика с версией в адресе: в продакшене содержимое под этим адресом не меняется, кешируем навсегда.
+// В разработке версия считается при старте, а CSS правится без перезапуска, поэтому там без кеша.
+app.use(
+  ASSET_PREFIX,
+  express.static(path.join(ROOT, 'public'), {
+    index: false,
+    ...(config.isProd ? { immutable: true, maxAge: '1y' } : { setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }),
+  }),
+);
+
+// Адреса без версии (старые ссылки, favicon) браузер обязан перепроверять; фото уникальны и неизменны
 app.use(
   express.static(path.join(ROOT, 'public'), {
-    maxAge: config.isProd ? '7d' : 0,
     setHeaders: (res, filePath) => {
-      if (filePath.includes(`${path.sep}uploads${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      const isUpload = filePath.includes(`${path.sep}uploads${path.sep}`);
+      res.setHeader('Cache-Control', isUpload ? 'public, max-age=31536000, immutable' : 'no-cache');
     },
   }),
 );
@@ -62,7 +74,12 @@ app.use(cookieMiddleware);
 app.use(csrfToken);
 
 app.use((req, res, next) => {
-  res.view = (name, data = {}) => res.send(eta.render(name, { ...res.locals, ...data }));
+  res.locals.asset = asset;
+  res.view = (name, data = {}) => {
+    // HTML не берём из кеша без проверки: иначе он может разойтись со статикой новой версии
+    res.set('Cache-Control', 'no-cache');
+    res.send(eta.render(name, { ...res.locals, ...data }));
+  };
   next();
 });
 

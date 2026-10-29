@@ -53,9 +53,9 @@
 <% if (it.mapUrl) { %>
           <a class="glass-chip glass-chip--link glass-chip--map reveal-chip" href="<%= it.mapUrl %>" target="_blank" rel="noopener"
              aria-label="Я тут: <%= it.fullAddress %>. Открыть на Яндекс Картах">
-            <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
+            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-pin"/></svg>
             <span class="glass-chip__label">Я тут</span>
-            <span class="glass-chip__go" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+            <span class="glass-chip__go" aria-hidden="true"><svg width="16" height="16"><use href="#i-arrow"/></svg></span>
           </a>
 <% } else { %>
           <span></span>

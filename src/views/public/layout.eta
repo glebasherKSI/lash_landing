@@ -19,11 +19,11 @@
 <% } %>
 
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <script src="/js/motion-init.js"></script>
+  <script src="<%= it.asset('/js/motion-init.js') %>"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">
-  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="<%= it.asset('/css/site.css') %>">
 <% if (it.settings?.accent_color) { %>
   <style nonce="<%= it.cspNonce %>">:root{--accent:<%= it.settings.accent_color %>}<% if (it.heroWork) { %>.photo-card__img{object-position:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}.photo-card__media{transform-origin:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}<% } %></style>
 <% } %>
@@ -39,10 +39,10 @@
   <%~ include('../partials/icons') %>
   <%~ it.body %>
 <% for (const src of it.scripts ?? []) { %>
-  <script src="<%= src %>" defer></script>
+  <script src="<%= it.asset(src) %>" defer></script>
 <% } %>
 <% for (const src of it.modules ?? []) { %>
-  <script type="module" src="<%= src %>"></script>
+  <script type="module" src="<%= it.asset(src) %>"></script>
 <% } %>
 </body>
 </html>
