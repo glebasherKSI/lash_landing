@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createReview, deleteReview, listReviews, reorderReviews, updateReview } from '../../db/repos/catalog.js';
 import { getSettings, saveSettings } from '../../db/repos/settings.js';
+import { mapUrl } from '../../lib/format.js';
 import { idListSchema, reviewSchema, settingsSchema } from '../../validation/schemas.js';
 import { action, idParam, notFound } from './helpers.js';
 
@@ -26,6 +27,7 @@ settingsRouter.get('/settings', (_req, res) => {
   res.view('admin/settings', {
     title: 'Настройки сайта',
     s: settings,
+    mapUrl: mapUrl(settings),
     whyItems: pad(settings.why_items, 4),
     visitSteps: pad(settings.visit_steps, 3),
     rules: pad(settings.rules, 4),

@@ -44,6 +44,19 @@ export const splitTitleLines = (title) => {
   return lines;
 };
 
+/**
+ * Ссылка «Я тут»: своя ссылка из админки (например, на организацию в Яндекс Картах),
+ * иначе поиск по городу и адресу.
+ */
+export const mapUrl = ({ map_url, city, address }) => {
+  if (map_url) return map_url;
+  const query = [city, address].filter(Boolean).join(', ');
+  return query ? `https://yandex.by/maps/?text=${encodeURIComponent(query)}` : '';
+};
+
+export const fullAddress = ({ city, address, metro }) =>
+  [city, address].filter(Boolean).join(', ') + (metro ? ` (${metro})` : '');
+
 export const telegramUrl = (username) => (username ? `https://t.me/${username.replace(/^@/, '')}` : '');
 
 export const phoneHref = (phone) => (phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : '');

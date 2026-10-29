@@ -10,13 +10,27 @@
     <div class="form-grid">
       <div class="field"><label for="st-master">Имя мастера</label><input id="st-master" name="master_name" value="<%= s.master_name %>" required maxlength="60"><p class="field-error" data-error-for="master_name"></p></div>
       <div class="field"><label for="st-studio">Название студии</label><input id="st-studio" name="studio_name" value="<%= s.studio_name %>" required maxlength="60"><p class="field-error" data-error-for="studio_name"></p></div>
-      <div class="field"><label for="st-city">Город</label><input id="st-city" name="city" value="<%= s.city %>" maxlength="40"></div>
-      <div class="field"><label for="st-metro">Метро или ориентир</label><input id="st-metro" name="metro" value="<%= s.metro %>" maxlength="60"></div>
-      <div class="field field--wide"><label for="st-address">Адрес</label><input id="st-address" name="address" value="<%= s.address %>" maxlength="120"></div>
       <div class="field"><label for="st-phone">Телефон</label><input id="st-phone" name="phone" value="<%= s.phone %>" type="tel" maxlength="30"></div>
       <div class="field"><label for="st-tg">Telegram (ник без @)</label><input id="st-tg" name="telegram" value="<%= s.telegram %>" maxlength="40"></div>
       <div class="field"><label for="st-ig">Instagram, ссылка</label><input id="st-ig" name="instagram" value="<%= s.instagram %>" type="url" placeholder="https://instagram.com/…" maxlength="200"><p class="field-error" data-error-for="instagram"></p></div>
       <div class="field"><label for="st-wa">WhatsApp, ссылка</label><input id="st-wa" name="whatsapp" value="<%= s.whatsapp %>" type="url" placeholder="https://wa.me/375…" maxlength="200"><p class="field-error" data-error-for="whatsapp"></p></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Адрес и карта</h2>
+    <p class="muted">На первом экране сайта адрес показан кнопкой «Я тут»: она открывает Яндекс Карты. Полный адрес виден в футере.</p>
+    <div class="form-grid">
+      <div class="field"><label for="st-city">Город</label><input id="st-city" name="city" value="<%= s.city %>" maxlength="40"></div>
+      <div class="field"><label for="st-metro">Метро или ориентир</label><input id="st-metro" name="metro" value="<%= s.metro %>" maxlength="60"></div>
+      <div class="field field--wide"><label for="st-address">Адрес</label><input id="st-address" name="address" value="<%= s.address %>" maxlength="120" placeholder="ул. Притыцкого, 2, студия 14"></div>
+      <div class="field field--wide">
+        <label for="st-map">Ссылка на Яндекс Карты <span class="muted">необязательно</span></label>
+        <input id="st-map" name="map_url" value="<%= s.map_url %>" type="url" maxlength="200" placeholder="https://yandex.by/maps/org/…">
+        <p class="field-hint">Откройте студию в Яндекс Картах, нажмите «Поделиться» и вставьте ссылку. Если оставить пустым, карта откроется поиском по городу и адресу.</p>
+        <p class="field-error" data-error-for="map_url"></p>
+      </div>
+      <p class="field--wide"><a class="admin-link" href="<%= it.mapUrl %>" target="_blank" rel="noopener" data-map-preview>Проверить, что откроется <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
     </div>
   </section>
 

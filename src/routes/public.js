@@ -17,7 +17,9 @@ import { config } from '../config.js';
 import { formatTime } from '../lib/time.js';
 import {
   formatDuration,
+  fullAddress,
   groupWorkingHours,
+  mapUrl,
   phoneHref,
   splitTitleLines,
   telegramUrl,
@@ -73,6 +75,7 @@ const buildJsonLd = (settings, workingHours, heroImage) => {
         opens: formatTime(d.start_min),
         closes: formatTime(d.end_min),
       })),
+    hasMap: mapUrl(settings) || undefined,
     sameAs: [settings.instagram].filter(Boolean),
   };
 };
@@ -125,6 +128,8 @@ publicRouter.get('/', (_req, res) => {
     siteUrl: config.SITE_URL,
     formatDuration,
     telegramUrl: telegramUrl(settings.telegram),
+    mapUrl: mapUrl(settings),
+    fullAddress: fullAddress(settings),
     phoneHref: phoneHref(settings.phone),
   });
 });

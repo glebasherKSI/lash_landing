@@ -398,3 +398,16 @@ if (autoDialog) {
   autoDialog.showModal();
   history.replaceState(null, '', location.pathname);
 }
+
+/* ---------- Адрес и карта: живая ссылка «Проверить» ---------- */
+
+const mapPreview = document.querySelector('[data-map-preview]');
+if (mapPreview) {
+  const form = mapPreview.closest('form');
+  const update = () => {
+    const custom = form.elements.map_url.value.trim();
+    const query = [form.elements.city.value, form.elements.address.value].map((v) => v.trim()).filter(Boolean).join(', ');
+    mapPreview.href = custom || (query ? `https://yandex.by/maps/?text=${encodeURIComponent(query)}` : '#');
+  };
+  ['city', 'address', 'map_url'].forEach((name) => form.elements[name].addEventListener('input', update));
+}

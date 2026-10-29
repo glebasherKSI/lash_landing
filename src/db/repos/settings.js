@@ -7,6 +7,7 @@ export const SETTINGS_DEFAULTS = {
   city: 'Минск',
   address: '',
   metro: '',
+  map_url: '',
   phone: '',
   telegram: '',
   instagram: '',

@@ -50,10 +50,16 @@
         <%~ include('../partials/hero-photo', { work: it.heroWork, heroLashes: it.heroLashes, almondPath: it.almondPath, windowBox: it.windowBox, lidPath: it.lidPath, lowerLidPath: it.lowerLidPath, illustrationLashes: it.initialLashes }) %>
 
         <div class="photo-card__top">
-          <p class="glass-chip reveal-chip">
+<% if (it.mapUrl) { %>
+          <a class="glass-chip glass-chip--link glass-chip--map reveal-chip" href="<%= it.mapUrl %>" target="_blank" rel="noopener"
+             aria-label="Я тут: <%= it.fullAddress %>. Открыть на Яндекс Картах">
             <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
-            <span><span class="glass-chip__label">Мы тут</span> <%= s.metro || s.address || s.city %></span>
-          </p>
+            <span class="glass-chip__label">Я тут</span>
+            <span class="glass-chip__go" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+          </a>
+<% } else { %>
+          <span></span>
+<% } %>
           <ul class="socials reveal-chip" aria-label="Соцсети">
 <% if (s.instagram) { %><li><a class="icon-btn" href="<%= s.instagram %>" target="_blank" rel="noopener" aria-label="Instagram"><svg aria-hidden="true"><use href="#i-instagram"/></svg></a></li><% } %>
 <% if (it.telegramUrl) { %><li><a class="icon-btn" href="<%= it.telegramUrl %>" target="_blank" rel="noopener" aria-label="Telegram"><svg aria-hidden="true"><use href="#i-telegram"/></svg></a></li><% } %>
@@ -293,7 +299,11 @@
     </div>
     <div class="footer__col">
       <h2 class="footer__title">Адрес</h2>
+<% if (it.mapUrl) { %>
+      <p><a href="<%= it.mapUrl %>" target="_blank" rel="noopener"><%= s.city %><%= s.address ? `, ${s.address}` : '' %></a></p>
+<% } else { %>
       <p><%= s.city %><%= s.address ? `, ${s.address}` : '' %></p>
+<% } %>
 <% if (s.metro) { %><p class="footer__muted"><%= s.metro %></p><% } %>
     </div>
     <div class="footer__col">

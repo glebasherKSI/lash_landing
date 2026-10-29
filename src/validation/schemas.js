@@ -155,6 +155,7 @@ export const settingsSchema = z.object({
   city: trimmed(40),
   address: trimmed(120),
   metro: trimmed(60),
+  map_url: optionalUrl,
   phone: trimmed(30),
   telegram: trimmed(40).transform((v) => v.replace(/^@/, '')),
   instagram: optionalUrl,
