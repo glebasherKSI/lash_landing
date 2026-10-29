@@ -19,7 +19,7 @@
 <section class="panel" aria-labelledby="works-title">
   <div class="panel__head">
     <h2 class="h3" id="works-title">Галерея · <%= it.works.length %></h2>
-    <p class="muted">Перетащите карточку, чтобы поменять порядок. Отмеченное фото стоит на первом экране сайта.</p>
+    <p class="muted">Перетащите карточку, чтобы поменять порядок. Отмеченное фото стоит на первом экране сайта и в галерее работ не показывается.</p>
   </div>
 <% if (!it.works.length) { %>
   <p class="empty">Фото пока нет. Пока их нет, на первом экране показывается иллюстрация.</p>
@@ -29,7 +29,7 @@
     <li class="work-card<%= w.id === it.heroWorkId ? ' is-hero' : '' %>" data-id="<%= w.id %>" data-row>
       <div class="work-card__img">
         <img src="<%= w.thumb %>" width="600" height="<%= w.thumbHeight %>" alt="<%= w.caption || 'Фото работы' %>" loading="lazy" draggable="false">
-<% if (w.id === it.heroWorkId) { %><span class="tag tag--accent work-card__badge">первый экран</span><% } %>
+<% if (w.id === it.heroWorkId) { %><span class="tag tag--accent work-card__badge">первый экран · не в галерее</span><% } %>
         <span class="drag-handle drag-handle--float" aria-hidden="true">⋮⋮</span>
       </div>
       <form class="work-card__form" data-api action="/admin/api/works/<%= w.id %>">

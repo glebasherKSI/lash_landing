@@ -115,7 +115,8 @@ publicRouter.get('/', (_req, res) => {
     lidPath: LID_PATH,
     lowerLidPath: LOWER_LID_PATH,
     barRatio,
-    works,
+    // фото первого экрана в галерее не повторяем
+    works: works.filter((w) => w.id !== heroWork?.id),
     heroWork,
     reviews: listReviews({ activeOnly: true }),
     hours: groupWorkingHours(workingHours),
