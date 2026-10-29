@@ -19,7 +19,7 @@
       </div>
 
       <div class="hero__copy">
-        <p class="eyebrow"><%= s.studio_name %> · <%= s.master_name %></p>
+        <p class="eyebrow"><%= s.studio_name === s.master_name ? s.master_name : `${s.studio_name} · ${s.master_name}` %></p>
         <h1 class="hero__title">
 <% for (const line of it.titleLines) { %>
           <span class="line"><span class="line__inner"><%= line %></span></span>
