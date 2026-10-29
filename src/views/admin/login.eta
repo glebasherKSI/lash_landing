@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Вход · Админка</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin admin--login">
+  <main class="login">
+    <form class="login__card" method="post" action="/admin/login">
+      <span class="logo" aria-hidden="true">OL</span>
+      <h1 class="h2">Вход в админку</h1>
+      <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input type="text" name="username" value="admin" autocomplete="username" hidden>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus<%~ it.error ? ' aria-invalid="true" aria-describedby="login-error"' : '' %>>
+<% if (it.error) { %>
+        <p class="field-error" id="login-error" role="alert"><%= it.error %></p>
+<% } %>
+      </div>
+      <button class="btn btn--dark btn--block" type="submit">Войти</button>
+      <a class="admin-link" href="/">← На сайт</a>
+    </form>
+  </main>
+</body>
+</html>

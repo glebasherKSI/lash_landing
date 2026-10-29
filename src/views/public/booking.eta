@@ -1,0 +1,112 @@
+<section class="section booking" id="booking" aria-labelledby="booking-title" data-reveal>
+  <div class="section-head">
+    <p class="eyebrow">Онлайн-запись</p>
+    <h2 id="booking-title" class="h2">Выберите услугу и время</h2>
+  </div>
+
+  <noscript><p class="notice">Для онлайн-записи включите JavaScript или напишите мастеру<% if (it.settings.phone) { %> по телефону <%= it.settings.phone %><% } %>.</p></noscript>
+
+  <form class="booking__layout" id="booking-form" novalidate>
+    <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+    <div class="booking__steps">
+
+      <fieldset class="bstep">
+        <legend class="bstep__legend"><span class="bstep__num">1</span>Услуга</legend>
+        <div class="service-options">
+<% for (const svc of it.services) { %>
+          <label class="option-card">
+            <input type="radio" name="service_id" value="<%= svc.id %>" required>
+            <span class="option-card__check" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+            <span class="option-card__body">
+              <span class="option-card__title"><%= svc.title %></span>
+              <span class="option-card__meta"><%= it.formatDuration(svc.duration_min) %></span>
+            </span>
+            <span class="option-card__price"><%= svc.price_byn %> BYN</span>
+          </label>
+<% } %>
+        </div>
+        <p class="field-error" data-error-for="service_id" role="alert"></p>
+      </fieldset>
+
+<% if (it.effects.length) { %>
+      <fieldset class="bstep">
+        <legend class="bstep__legend"><span class="bstep__num">2</span>Эффект <span class="bstep__hint">можно решить на месте</span></legend>
+        <div class="chips">
+<% for (const effect of it.effects) { %>
+          <label class="chip chip--radio"><input type="radio" name="effect_slug" value="<%= effect.slug %>"><span><%= effect.name %></span></label>
+<% } %>
+          <label class="chip chip--radio"><input type="radio" name="effect_slug" value="" checked><span>Подберём вместе</span></label>
+        </div>
+      </fieldset>
+<% } %>
+
+      <fieldset class="bstep" data-step="date">
+        <legend class="bstep__legend"><span class="bstep__num"><%= it.effects.length ? 3 : 2 %></span>Дата</legend>
+        <div class="date-strip" data-dates>
+          <p class="bstep__placeholder">Сначала выберите услугу</p>
+        </div>
+        <p class="field-error" data-error-for="date" role="alert"></p>
+      </fieldset>
+
+      <fieldset class="bstep" data-step="time">
+        <legend class="bstep__legend"><span class="bstep__num"><%= it.effects.length ? 4 : 3 %></span>Время</legend>
+        <div class="time-grid" data-times aria-live="polite">
+          <p class="bstep__placeholder">Сначала выберите дату</p>
+        </div>
+        <p class="field-error" data-error-for="time" role="alert"></p>
+      </fieldset>
+
+      <fieldset class="bstep">
+        <legend class="bstep__legend"><span class="bstep__num"><%= it.effects.length ? 5 : 4 %></span>Ваши контакты</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="f-name">Имя</label>
+            <input id="f-name" name="client_name" autocomplete="given-name" required minlength="2" maxlength="60">
+            <p class="field-error" data-error-for="client_name" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="f-contact">Телефон или Telegram</label>
+            <input id="f-contact" name="contact" autocomplete="tel" inputmode="text" required maxlength="40" placeholder="+375 29 123-45-67 или @username" aria-describedby="f-contact-hint">
+            <p class="field-hint" id="f-contact-hint">Мастер подтвердит запись в течение пары часов</p>
+            <p class="field-error" data-error-for="contact" role="alert"></p>
+          </div>
+          <div class="field field--wide">
+            <label for="f-comment">Комментарий <span class="field-optional">необязательно</span></label>
+            <textarea id="f-comment" name="comment" rows="2" maxlength="500"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="f-website">Сайт</label>
+            <input id="f-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <aside class="summary" aria-labelledby="summary-title">
+      <div class="summary__card">
+        <h3 id="summary-title" class="summary__title">Ваша запись</h3>
+        <dl class="summary__list">
+          <div><dt>Услуга</dt><dd data-summary="service">—</dd></div>
+          <div><dt>Эффект</dt><dd data-summary="effect">подберём вместе</dd></div>
+          <div><dt>Дата</dt><dd data-summary="date">—</dd></div>
+          <div><dt>Время</dt><dd data-summary="time">—</dd></div>
+          <div class="summary__total"><dt>Стоимость</dt><dd data-summary="price">—</dd></div>
+        </dl>
+        <p class="form-error" data-form-error role="alert"></p>
+        <button type="submit" class="btn btn--dark btn--block" data-submit>Записаться</button>
+        <p class="summary__note">Оплата после процедуры. Перенос и отмена не позже чем за 24 часа.</p>
+      </div>
+    </aside>
+  </form>
+
+  <div class="success card" id="booking-success" hidden tabindex="-1">
+    <svg class="success__check" viewBox="0 0 52 52" aria-hidden="true">
+      <circle class="success__circle" cx="26" cy="26" r="24" pathLength="1"/>
+      <path class="success__tick" d="m15 27 7.5 7.5L37.5 19" pathLength="1"/>
+    </svg>
+    <h3 class="h2 success__title">Вы записаны</h3>
+    <p class="success__text" data-success-text></p>
+    <p class="success__muted">Мастер свяжется с вами, чтобы подтвердить запись.</p>
+    <button type="button" class="btn btn--ghost" data-booking-again>Записаться ещё</button>
+  </div>
+</section>

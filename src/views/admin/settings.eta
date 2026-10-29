@@ -1,0 +1,154 @@
+<% layout('./layout') %>
+<% const s = it.s %>
+<div class="admin-head">
+  <h1 class="h2">Настройки сайта</h1>
+</div>
+
+<form class="admin-form settings-form" data-api action="/admin/api/settings">
+  <section class="panel">
+    <h2 class="h3 panel__title">Мастер и контакты</h2>
+    <div class="form-grid">
+      <div class="field"><label for="st-master">Имя мастера</label><input id="st-master" name="master_name" value="<%= s.master_name %>" required maxlength="60"><p class="field-error" data-error-for="master_name"></p></div>
+      <div class="field"><label for="st-studio">Название студии</label><input id="st-studio" name="studio_name" value="<%= s.studio_name %>" required maxlength="60"><p class="field-error" data-error-for="studio_name"></p></div>
+      <div class="field"><label for="st-city">Город</label><input id="st-city" name="city" value="<%= s.city %>" maxlength="40"></div>
+      <div class="field"><label for="st-metro">Метро или ориентир</label><input id="st-metro" name="metro" value="<%= s.metro %>" maxlength="60"></div>
+      <div class="field field--wide"><label for="st-address">Адрес</label><input id="st-address" name="address" value="<%= s.address %>" maxlength="120"></div>
+      <div class="field"><label for="st-phone">Телефон</label><input id="st-phone" name="phone" value="<%= s.phone %>" type="tel" maxlength="30"></div>
+      <div class="field"><label for="st-tg">Telegram (ник без @)</label><input id="st-tg" name="telegram" value="<%= s.telegram %>" maxlength="40"></div>
+      <div class="field"><label for="st-ig">Instagram, ссылка</label><input id="st-ig" name="instagram" value="<%= s.instagram %>" type="url" placeholder="https://instagram.com/…" maxlength="200"><p class="field-error" data-error-for="instagram"></p></div>
+      <div class="field"><label for="st-wa">WhatsApp, ссылка</label><input id="st-wa" name="whatsapp" value="<%= s.whatsapp %>" type="url" placeholder="https://wa.me/375…" maxlength="200"><p class="field-error" data-error-for="whatsapp"></p></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Первый экран и оформление</h2>
+    <div class="form-grid">
+      <div class="field field--wide">
+        <label for="st-title">Заголовок</label>
+        <textarea id="st-title" name="hero_title" rows="2" maxlength="80" required><%= s.hero_title %></textarea>
+        <p class="field-hint">Каждая строка с новой строки. Если не разбивать, сайт разобьёт сам.</p>
+        <p class="field-error" data-error-for="hero_title"></p>
+      </div>
+      <div class="field field--wide"><label for="st-sub">Подзаголовок</label><textarea id="st-sub" name="hero_subtitle" rows="2" maxlength="240"><%= s.hero_subtitle %></textarea></div>
+      <div class="field field--wide"><label for="st-seo">Описание для поисковиков</label><textarea id="st-seo" name="seo_description" rows="2" maxlength="200"><%= s.seo_description %></textarea><p class="field-hint">Показывается в Google и Яндексе под названием сайта. До 160 символов.</p></div>
+      <div class="field">
+        <label for="st-accent">Акцентный цвет</label>
+        <div class="color-field">
+          <input id="st-accent" name="accent_color" type="color" value="<%= s.accent_color %>">
+          <span class="muted" data-color-value><%= s.accent_color %></span>
+          <button type="button" class="btn btn--ghost btn--sm" data-color-reset="#F2D2D8">Вернуть розовый</button>
+        </div>
+        <p class="field-error" data-error-for="accent_color"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Блок «Почему я»</h2>
+    <div class="field"><label for="st-why">Заголовок в круге</label><input id="st-why" name="why_title" value="<%= s.why_title %>" maxlength="40"></div>
+    <div class="repeat-grid">
+<% for (const [i, item] of it.whyItems.entries()) { %>
+      <fieldset class="repeat-item">
+        <legend>Карточка <%= i + 1 %></legend>
+        <label class="sr-only" for="why-t-<%= i %>">Заголовок карточки <%= i + 1 %></label>
+        <input id="why-t-<%= i %>" name="why_items[<%= i %>][title]" value="<%= item.title %>" placeholder="Заголовок" maxlength="80">
+        <label class="sr-only" for="why-x-<%= i %>">Текст карточки <%= i + 1 %></label>
+        <textarea id="why-x-<%= i %>" name="why_items[<%= i %>][text]" rows="2" placeholder="Текст" maxlength="400"><%= item.text %></textarea>
+      </fieldset>
+<% } %>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Как проходит визит</h2>
+    <div class="repeat-grid repeat-grid--3">
+<% for (const [i, item] of it.visitSteps.entries()) { %>
+      <fieldset class="repeat-item">
+        <legend>Шаг <%= i + 1 %></legend>
+        <label class="sr-only" for="vs-t-<%= i %>">Заголовок шага <%= i + 1 %></label>
+        <input id="vs-t-<%= i %>" name="visit_steps[<%= i %>][title]" value="<%= item.title %>" placeholder="Заголовок" maxlength="80">
+        <label class="sr-only" for="vs-x-<%= i %>">Текст шага <%= i + 1 %></label>
+        <textarea id="vs-x-<%= i %>" name="visit_steps[<%= i %>][text]" rows="3" placeholder="Текст" maxlength="400"><%= item.text %></textarea>
+      </fieldset>
+<% } %>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Правила записи</h2>
+    <div class="repeat-grid">
+<% for (const [i, item] of it.rules.entries()) { %>
+      <fieldset class="repeat-item">
+        <legend>Правило <%= i + 1 %></legend>
+        <label class="sr-only" for="ru-t-<%= i %>">Заголовок правила <%= i + 1 %></label>
+        <input id="ru-t-<%= i %>" name="rules[<%= i %>][title]" value="<%= item.title %>" placeholder="Заголовок" maxlength="80">
+        <label class="sr-only" for="ru-x-<%= i %>">Текст правила <%= i + 1 %></label>
+        <textarea id="ru-x-<%= i %>" name="rules[<%= i %>][text]" rows="2" placeholder="Текст" maxlength="400"><%= item.text %></textarea>
+      </fieldset>
+<% } %>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h3 panel__title">Чек-лист «Как подготовиться»</h2>
+    <p class="muted">Пустые строки не показываются. Сохраните, чтобы появились новые пустые поля.</p>
+    <div class="checklist-inputs">
+<% for (const [i, item] of it.checklist.entries()) { %>
+      <label class="sr-only" for="cl-<%= i %>">Пункт <%= i + 1 %></label>
+      <input id="cl-<%= i %>" name="checklist[<%= i %>]" value="<%= item %>" maxlength="160" placeholder="Новый пункт">
+<% } %>
+    </div>
+  </section>
+
+  <div class="sticky-save">
+    <p class="form-error" data-form-error role="alert"></p>
+    <button class="btn btn--dark" type="submit">Сохранить настройки</button>
+  </div>
+</form>
+
+<section class="panel" aria-labelledby="reviews-title">
+  <div class="panel__head">
+    <h2 class="h3" id="reviews-title">Отзывы</h2>
+    <p class="muted">Каждый отзыв сохраняется отдельно.</p>
+  </div>
+  <ul class="sort-list review-admin-list" data-sortable="/admin/api/reviews/reorder">
+<% for (const r of it.reviews) { %>
+    <li class="sort-row sort-row--top" data-id="<%= r.id %>" data-row>
+      <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+      <form class="review-form" data-api action="/admin/api/reviews/<%= r.id %>">
+        <div class="review-form__line">
+          <label class="sr-only" for="ra-<%= r.id %>">Имя</label>
+          <input id="ra-<%= r.id %>" name="author" value="<%= r.author %>" maxlength="60" required>
+          <label class="sr-only" for="rr-<%= r.id %>">Оценка</label>
+          <select id="rr-<%= r.id %>" name="rating" class="select">
+<% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"<%~ n === r.rating ? ' selected' : '' %>><%= n %> ★</option><% } %>
+          </select>
+          <label class="check"><input type="checkbox" name="is_active"<%~ r.is_active ? ' checked' : '' %>> на сайте</label>
+        </div>
+        <label class="sr-only" for="rt-<%= r.id %>">Текст отзыва</label>
+        <textarea id="rt-<%= r.id %>" name="text" rows="2" maxlength="800" required><%= r.text %></textarea>
+        <p class="field-error" data-error-for="text"></p>
+        <div class="row-actions">
+          <button class="btn btn--ghost btn--sm" type="submit">Сохранить</button>
+          <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/reviews/<%= r.id %>/delete" data-confirm="Удалить отзыв <%= r.author %>?" data-remove-row>Удалить</button>
+        </div>
+      </form>
+    </li>
+<% } %>
+  </ul>
+  <form class="review-form review-form--new" data-api action="/admin/api/reviews" data-reload>
+    <h3 class="h3">Добавить отзыв</h3>
+    <div class="review-form__line">
+      <label class="sr-only" for="ra-new">Имя</label>
+      <input id="ra-new" name="author" placeholder="Имя клиентки" maxlength="60" required>
+      <label class="sr-only" for="rr-new">Оценка</label>
+      <select id="rr-new" name="rating" class="select"><% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"><%= n %> ★</option><% } %></select>
+      <input type="hidden" name="is_active" value="on">
+    </div>
+    <label class="sr-only" for="rt-new">Текст отзыва</label>
+    <textarea id="rt-new" name="text" rows="3" placeholder="Текст отзыва" maxlength="800" required></textarea>
+    <p class="field-error" data-error-for="author"></p>
+    <p class="field-error" data-error-for="text"></p>
+    <button class="btn btn--dark btn--sm" type="submit">Добавить</button>
+  </form>
+</section>

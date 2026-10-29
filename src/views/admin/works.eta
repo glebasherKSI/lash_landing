@@ -1,0 +1,92 @@
+<% layout('./layout') %>
+<div class="admin-head">
+  <h1 class="h2">Работы</h1>
+</div>
+
+<section class="panel" aria-labelledby="upload-title">
+  <h2 class="sr-only" id="upload-title">Загрузка фото</h2>
+  <form class="dropzone" data-upload action="/admin/api/works">
+    <input class="sr-only" type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple>
+    <label class="dropzone__label" for="photos">
+      <span class="dropzone__icon" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+      <span class="dropzone__title">Перетащите фото сюда или нажмите, чтобы выбрать</span>
+      <span class="muted">JPG, PNG, WebP или HEIC до <%= it.maxMb %> МБ, можно несколько сразу. Фото сожмутся до 1600 px.</span>
+    </label>
+    <p class="dropzone__progress" data-upload-status aria-live="polite"></p>
+  </form>
+</section>
+
+<section class="panel" aria-labelledby="works-title">
+  <div class="panel__head">
+    <h2 class="h3" id="works-title">Галерея · <%= it.works.length %></h2>
+    <p class="muted">Перетащите карточку, чтобы поменять порядок. Отмеченное фото стоит на первом экране сайта.</p>
+  </div>
+<% if (!it.works.length) { %>
+  <p class="empty">Фото пока нет. Пока их нет, на первом экране показывается иллюстрация.</p>
+<% } %>
+  <ul class="works-admin" data-sortable="/admin/api/works/reorder">
+<% for (const w of it.works) { %>
+    <li class="work-card<%= w.id === it.heroWorkId ? ' is-hero' : '' %>" data-id="<%= w.id %>" data-row>
+      <div class="work-card__img">
+        <img src="<%= w.thumb %>" width="600" height="<%= w.thumbHeight %>" alt="<%= w.caption || 'Фото работы' %>" loading="lazy" draggable="false">
+<% if (w.id === it.heroWorkId) { %><span class="tag tag--accent work-card__badge">первый экран</span><% } %>
+        <span class="drag-handle drag-handle--float" aria-hidden="true">⋮⋮</span>
+      </div>
+      <form class="work-card__form" data-api action="/admin/api/works/<%= w.id %>">
+        <label class="sr-only" for="cap-<%= w.id %>">Подпись</label>
+        <input id="cap-<%= w.id %>" name="caption" value="<%= w.caption %>" placeholder="Подпись, например «2D, лисий эффект»" maxlength="120">
+        <button class="btn btn--ghost btn--sm" type="submit">Сохранить</button>
+      </form>
+      <div class="row-actions">
+        <button type="button" class="icon-btn icon-btn--plain" data-move="up" aria-label="Раньше"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+        <button type="button" class="icon-btn icon-btn--plain" data-move="down" aria-label="Позже"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+<% if (w.id !== it.heroWorkId) { %>
+        <button type="button" class="btn btn--ghost btn--sm" data-api-post="/admin/api/works/<%= w.id %>/hero" data-reload>На первый экран</button>
+<% } else { %>
+        <button type="button" class="btn btn--dark btn--sm" data-open-dialog="focus-dialog">Настроить окно</button>
+<% } %>
+        <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/works/<%= w.id %>/delete" data-confirm="Удалить это фото? Отменить будет нельзя." data-remove-row>Удалить</button>
+      </div>
+    </li>
+<% } %>
+  </ul>
+</section>
+
+<% if (it.heroWork) { const w = it.heroWork; %>
+<dialog class="admin-dialog admin-dialog--wide" id="focus-dialog" aria-labelledby="focus-title">
+  <form class="admin-form" data-api action="/admin/api/works/<%= w.id %>/focus" data-focus-form>
+    <div class="admin-dialog__head">
+      <h2 class="h3" id="focus-title">Окно на первом экране</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <p class="muted">Нажмите на фото между глаз модели. Фото на сайте кадрируется так, чтобы эта точка оказалась в центре окна. Ползунком подберите ширину окна.</p>
+
+    <div class="focus-editor">
+      <div class="focus-picker" data-focus-picker tabindex="0" role="slider" aria-label="Точка фокуса, стрелки двигают её"
+           aria-valuetext="<%= w.focus_x %>% по горизонтали, <%= w.focus_y %>% по вертикали">
+        <img src="<%= w.thumb %>" width="600" height="<%= w.thumbHeight %>" alt="" draggable="false">
+        <span class="focus-picker__mark" data-focus-mark aria-hidden="true"></span>
+      </div>
+
+      <div class="focus-side">
+        <p class="focus-side__label">Как на сайте</p>
+        <div class="photo-card focus-preview" data-focus-preview data-fx="<%= w.focus_x %>" data-fy="<%= w.focus_y %>" data-ww="<%= w.window_w %>">
+          <%~ include('../partials/hero-photo', { work: w, heroLashes: it.heroLashes, almondPath: it.almondPath, windowBox: it.windowBox, eager: false, sizes: '320px' }) %>
+        </div>
+        <div class="field">
+          <label for="focus-w">Ширина окна: <span data-focus-w-value><%= Math.round(w.window_w) %></span>%</label>
+          <input id="focus-w" type="range" name="window_w" min="40" max="100" step="1" value="<%= w.window_w %>" data-focus-w>
+        </div>
+      </div>
+    </div>
+
+    <input type="hidden" name="focus_x" value="<%= w.focus_x %>">
+    <input type="hidden" name="focus_y" value="<%= w.focus_y %>">
+    <p class="form-error" data-form-error role="alert"></p>
+    <div class="admin-dialog__foot">
+      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
+      <button type="submit" class="btn btn--dark">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+<% } %>

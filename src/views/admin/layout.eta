@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= it.title %> · Админка</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/theme.css">
+</head>
+<body class="admin" data-csrf="<%= it.csrfToken %>">
+  <%~ include('../partials/icons') %>
+<% const nav = [
+  ['/admin/bookings', 'Записи', 'i-calendar'],
+  ['/admin/services', 'Услуги', 'i-lash'],
+  ['/admin/works', 'Работы', 'i-eye'],
+  ['/admin/schedule', 'Расписание', 'i-clock'],
+  ['/admin/effects', 'Эффекты', 'i-sparkle'],
+  ['/admin/settings', 'Настройки', 'i-feather'],
+] %>
+  <div class="admin-shell">
+    <header class="admin-side">
+      <div class="admin-brand">
+        <span class="logo logo--sm" aria-hidden="true"><%= (it.studioName || 'OL').split(/\s+/).map((w) => w[0]).join('').slice(0, 2) %></span>
+        <span class="admin-brand__name"><%= it.studioName %></span>
+      </div>
+      <nav class="admin-nav" aria-label="Разделы админки">
+<% for (const [href, label, icon] of nav) { %>
+        <a href="<%= href %>"<%~ it.currentPath.startsWith(href) ? ' aria-current="page"' : '' %>>
+          <svg class="icon" aria-hidden="true"><use href="#<%= icon %>"/></svg><span><%= label %></span>
+<% if (href === '/admin/bookings' && it.newBookings) { %><span class="badge" aria-label="новых: <%= it.newBookings %>"><%= it.newBookings %></span><% } %>
+        </a>
+<% } %>
+      </nav>
+      <div class="admin-side__foot">
+        <a class="admin-link" href="/" target="_blank" rel="noopener">Открыть сайт <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <form method="post" action="/admin/logout">
+          <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+          <button class="admin-link" type="submit">Выйти</button>
+        </form>
+      </div>
+    </header>
+
+    <main class="admin-main" id="main">
+      <%~ it.body %>
+    </main>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-text">
+    <form method="dialog" class="confirm-dialog__body">
+      <p id="confirm-text" class="confirm-dialog__text"></p>
+      <div class="confirm-dialog__actions">
+        <button class="btn btn--ghost" value="cancel">Отмена</button>
+        <button class="btn btn--danger" value="ok">Удалить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

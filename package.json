@@ -1,0 +1,33 @@
+{
+  "name": "orlova-lash",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Лендинг мастера по наращиванию ресниц с онлайн-записью и админкой",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/prepare.js && node --watch-path=src --watch-path=migrations src/server.js",
+    "start": "node src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "hash-password": "node scripts/hash-password.js",
+    "vendor": "node scripts/vendor.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "argon2": "^0.45.1",
+    "better-sqlite3": "^13.0.3",
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.9",
+    "eta": "^4.6.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.7.1",
+    "gsap": "^3.12.7",
+    "helmet": "^8.0.0",
+    "multer": "^2.0.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  }
+}

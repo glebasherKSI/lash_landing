@@ -1,0 +1,8 @@
+<% layout('./layout', { pageTitle: 'Страница не найдена', pageDescription: '', siteUrl: '' }) %>
+<main class="page" id="main">
+  <div class="not-found">
+    <p class="eyebrow">404</p>
+    <h1 class="h2">Такой страницы нет</h1>
+    <a class="btn btn--dark" href="/">На главную</a>
+  </div>
+</main>

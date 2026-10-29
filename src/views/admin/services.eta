@@ -1,0 +1,129 @@
+<% layout('./layout') %>
+<div class="admin-head">
+  <h1 class="h2">Услуги</h1>
+  <button type="button" class="btn btn--dark" data-edit-service>+ Добавить услугу</button>
+</div>
+
+<section class="panel" aria-labelledby="services-list-title">
+  <div class="panel__head">
+    <h2 class="h3" id="services-list-title">Прайс</h2>
+    <p class="muted">Перетащите строку за ручку или используйте стрелки, чтобы поменять порядок на сайте.</p>
+  </div>
+<% if (!it.services.length) { %>
+  <p class="empty">Услуг пока нет. Нажмите «Добавить услугу».</p>
+<% } %>
+  <ul class="sort-list" data-sortable="/admin/api/services/reorder">
+<% for (const s of it.services) { %>
+    <li class="sort-row service-row<%= s.is_active ? '' : ' is-off' %>" data-id="<%= s.id %>" data-row>
+      <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+      <span class="swatch g-<%= s.gradient %>" aria-hidden="true"></span>
+      <div class="service-row__main">
+        <p class="service-row__title"><%= s.title %><% if (s.is_popular) { %> <span class="tag tag--accent">популярное</span><% } %><% if (!s.is_active) { %> <span class="tag">скрыта</span><% } %></p>
+        <p class="muted"><%= s.category_name || 'без вкладки' %> · <%= it.formatDuration(s.duration_min) %> · плитка <%= s.tile.replace('x', '×') %></p>
+      </div>
+      <p class="service-row__price"><%= s.price_byn %> BYN</p>
+      <div class="row-actions">
+        <button type="button" class="icon-btn icon-btn--plain" data-move="up" aria-label="Выше: <%= s.title %>"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+        <button type="button" class="icon-btn icon-btn--plain" data-move="down" aria-label="Ниже: <%= s.title %>"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <label class="switch" title="Показывать на сайте">
+          <input type="checkbox" data-toggle-url="/admin/api/services/<%= s.id %>/toggle"<%~ s.is_active ? ' checked' : '' %>>
+          <span class="sr-only">Показывать «<%= s.title %>» на сайте</span>
+        </label>
+        <button type="button" class="btn btn--ghost btn--sm" data-edit-service='<%= JSON.stringify(s) %>'>Изменить</button>
+        <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/services/<%= s.id %>/delete" data-confirm="Удалить услугу «<%= s.title %>»? Прошлые записи на неё сохранятся." data-remove-row>Удалить</button>
+      </div>
+    </li>
+<% } %>
+  </ul>
+</section>
+
+<section class="panel" aria-labelledby="categories-title">
+  <div class="panel__head">
+    <h2 class="h3" id="categories-title">Вкладки на сайте</h2>
+    <p class="muted">Вкладки-заголовки над карточками услуг. Пустые вкладки на сайте не показываются.</p>
+  </div>
+  <ul class="sort-list" data-sortable="/admin/api/categories/reorder">
+<% for (const c of it.categories) { %>
+    <li class="sort-row" data-id="<%= c.id %>" data-row>
+      <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+      <form class="inline-form" data-api action="/admin/api/categories/<%= c.id %>">
+        <label class="sr-only" for="cat-<%= c.id %>">Название вкладки</label>
+        <input id="cat-<%= c.id %>" name="name" value="<%= c.name %>" required maxlength="40">
+        <button class="btn btn--ghost btn--sm" type="submit">Сохранить</button>
+      </form>
+      <div class="row-actions">
+        <button type="button" class="icon-btn icon-btn--plain" data-move="up" aria-label="Выше: <%= c.name %>"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+        <button type="button" class="icon-btn icon-btn--plain" data-move="down" aria-label="Ниже: <%= c.name %>"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/categories/<%= c.id %>/delete" data-confirm="Удалить вкладку «<%= c.name %>»? Услуги из неё останутся, но окажутся без вкладки." data-reload>Удалить</button>
+      </div>
+    </li>
+<% } %>
+  </ul>
+  <form class="inline-form inline-form--add" data-api action="/admin/api/categories" data-reload>
+    <label class="sr-only" for="cat-new">Новая вкладка</label>
+    <input id="cat-new" name="name" placeholder="Новая вкладка, например «Уход»" required maxlength="40">
+    <button class="btn btn--dark btn--sm" type="submit">Добавить</button>
+    <p class="field-error" data-error-for="name"></p>
+  </form>
+</section>
+
+<dialog class="admin-dialog" id="service-dialog" aria-labelledby="service-dialog-title">
+  <form class="admin-form" data-api action="/admin/api/services" data-reload id="service-form">
+    <div class="admin-dialog__head">
+      <h2 class="h3" id="service-dialog-title">Услуга</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="form-grid">
+      <div class="field field--wide">
+        <label for="s-title">Название</label>
+        <input id="s-title" name="title" required maxlength="80">
+        <p class="field-error" data-error-for="title"></p>
+      </div>
+      <div class="field field--wide">
+        <label for="s-desc">Описание</label>
+        <textarea id="s-desc" name="description" rows="3" maxlength="400"></textarea>
+        <p class="field-error" data-error-for="description"></p>
+      </div>
+      <div class="field">
+        <label for="s-price">Цена, BYN</label>
+        <input id="s-price" name="price_byn" type="number" min="0" max="10000" step="1" inputmode="numeric" required>
+        <p class="field-error" data-error-for="price_byn"></p>
+      </div>
+      <div class="field">
+        <label for="s-duration">Длительность, минут</label>
+        <input id="s-duration" name="duration_min" type="number" min="15" max="600" step="5" inputmode="numeric" required>
+        <p class="field-error" data-error-for="duration_min"></p>
+      </div>
+      <div class="field">
+        <label for="s-category">Вкладка</label>
+        <select id="s-category" name="category_id" class="select">
+          <option value="">Без вкладки</option>
+<% for (const c of it.categories) { %><option value="<%= c.id %>"><%= c.name %></option><% } %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="s-tile">Размер плитки</label>
+        <select id="s-tile" name="tile" class="select">
+<% for (const t of it.tiles) { %><option value="<%= t.value %>"><%= t.label %></option><% } %>
+        </select>
+      </div>
+      <fieldset class="field field--wide swatches">
+        <legend>Цвет карточки</legend>
+<% for (const g of it.gradients) { %>
+        <label class="swatch-option">
+          <input type="radio" name="gradient" value="<%= g.value %>">
+          <span class="swatch swatch--lg g-<%= g.value %>" aria-hidden="true"></span>
+          <span><%= g.label %></span>
+        </label>
+<% } %>
+      </fieldset>
+      <label class="check"><input type="checkbox" name="is_popular"> Популярное</label>
+      <label class="check"><input type="checkbox" name="is_active" checked> Показывать на сайте</label>
+    </div>
+    <p class="form-error" data-form-error role="alert"></p>
+    <div class="admin-dialog__foot">
+      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
+      <button type="submit" class="btn btn--dark">Сохранить</button>
+    </div>
+  </form>
+</dialog>

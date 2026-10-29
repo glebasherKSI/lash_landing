@@ -1,0 +1,36 @@
+<%/* Фото, рифлёное стекло и «окно-глаз». Общий для сайта и превью в админке.
+   it.work — фото первого экрана (или null), it.heroLashes — штрихи ресниц, it.almondPath — контур окна. */%>
+<% if (it.work) { %>
+<% const srcset = `${it.work.thumb} 600w, ${it.work.src} ${it.work.width}w`; const sizes = it.sizes ?? '(max-width: 900px) 100vw, 600px'; %>
+        <div class="photo-card__media">
+          <img class="photo-card__img" src="<%= it.work.src %>" srcset="<%= srcset %>" sizes="<%= sizes %>"
+               width="<%= it.work.width %>" height="<%= it.work.height %>"
+               alt="<%= it.work.caption || 'Наращивание ресниц, крупный план' %>"<%~ it.eager === false ? ' loading="lazy"' : ' fetchpriority="high"' %>>
+        </div>
+        <%/* Стекло: размытая копия того же фото с рифлением; окно вырезается clip-path (evenodd).
+             Не backdrop-filter: его Chrome не вырезает по дырке в clip-path. */%>
+        <div class="glass" aria-hidden="true">
+          <div class="photo-card__media">
+            <img class="photo-card__img photo-card__img--blur" src="<%= it.work.src %>" srcset="<%= srcset %>" sizes="<%= sizes %>"
+                 width="<%= it.work.width %>" height="<%= it.work.height %>" alt="" decoding="async"<%~ it.eager === false ? ' loading="lazy"' : '' %>>
+          </div>
+        </div>
+        <svg class="eye-window" viewBox="<%= it.windowBox %>" preserveAspectRatio="none" aria-hidden="true">
+          <path class="eye-window__outline" d="<%= it.almondPath %>" pathLength="1"/>
+<% for (const d of it.heroLashes) { %>
+          <path class="eye-window__lash" d="<%= d %>" pathLength="1"/>
+<% } %>
+        </svg>
+<% } else { %>
+        <svg class="photo-card__illustration" viewBox="0 0 640 400" role="img" aria-label="Иллюстрация: глаз с наращенными ресницами">
+          <path d="<%= it.lowerLidPath %>" transform="translate(20 60)" fill="none" stroke="currentColor" stroke-width="2" opacity=".35"/>
+          <circle cx="320" cy="255" r="58" fill="none" stroke="currentColor" stroke-width="2" opacity=".5"/>
+          <circle cx="320" cy="255" r="22" fill="currentColor" opacity=".8"/>
+          <path d="<%= it.lidPath %>" transform="translate(20 60)" fill="none" stroke="currentColor" stroke-width="3"/>
+          <g transform="translate(20 60)">
+<% for (const line of it.illustrationLashes) { %>
+            <path class="draw-lashes" d="<%= line.d %>" fill="currentColor"/>
+<% } %>
+          </g>
+        </svg>
+<% } %>

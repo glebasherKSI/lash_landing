@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= it.pageTitle %></title>
+  <meta name="description" content="<%= it.pageDescription %>">
+  <link rel="canonical" href="<%= it.siteUrl %>/">
+  <meta name="theme-color" content="#E4E5E8">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="<%= it.pageTitle %>">
+  <meta property="og:description" content="<%= it.pageDescription %>">
+  <meta property="og:url" content="<%= it.siteUrl %>/">
+<% if (it.ogImage) { %>
+  <meta property="og:image" content="<%= it.siteUrl %><%= it.ogImage %>">
+  <meta name="twitter:card" content="summary_large_image">
+<% } %>
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script src="/js/motion-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="/css/site.css">
+<% if (it.settings?.accent_color) { %>
+  <style nonce="<%= it.cspNonce %>">:root{--accent:<%= it.settings.accent_color %>}<% if (it.heroWork) { %>.photo-card__img{object-position:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}.photo-card__media{transform-origin:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}<% } %></style>
+<% } %>
+<% if (it.preloadImage) { %>
+  <link rel="preload" as="image" href="<%= it.preloadImage.href %>" imagesrcset="<%= it.preloadImage.srcset %>" imagesizes="<%= it.preloadImage.sizes %>" fetchpriority="high">
+<% } %>
+<% if (it.jsonLd) { %>
+  <script type="application/ld+json"><%~ JSON.stringify(it.jsonLd).replace(/</g, '\\u003c') %></script>
+<% } %>
+</head>
+<body>
+  <a class="skip-link" href="#main">К содержанию</a>
+  <%~ include('../partials/icons') %>
+  <%~ it.body %>
+<% for (const src of it.scripts ?? []) { %>
+  <script src="<%= src %>" defer></script>
+<% } %>
+<% for (const src of it.modules ?? []) { %>
+  <script type="module" src="<%= src %>"></script>
+<% } %>
+</body>
+</html>

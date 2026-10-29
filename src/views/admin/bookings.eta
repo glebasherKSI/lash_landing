@@ -1,0 +1,120 @@
+<% layout('./layout') %>
+<div class="admin-head">
+  <h1 class="h2">Записи</h1>
+  <button type="button" class="btn btn--dark" data-open-dialog="booking-dialog">+ Добавить запись</button>
+</div>
+
+<form class="filters" method="get" action="/admin/bookings">
+  <div class="segmented" role="group" aria-label="Период">
+<% for (const p of it.periods) { %>
+    <a class="segmented__item" href="?period=<%= p.value %><%= it.status ? '&status=' + it.status : '' %>"<%~ p.value === it.period ? ' aria-current="true"' : '' %>><%= p.label %></a>
+<% } %>
+  </div>
+  <div class="segmented" role="group" aria-label="Статус">
+    <a class="segmented__item" href="?period=<%= it.period %>"<%~ !it.status ? ' aria-current="true"' : '' %>>Все статусы</a>
+<% for (const s of it.statuses) { %>
+    <a class="segmented__item" href="?period=<%= it.period %>&status=<%= s.value %>"<%~ s.value === it.status ? ' aria-current="true"' : '' %>><%= s.label %></a>
+<% } %>
+  </div>
+</form>
+
+<% if (!it.groups.length) { %>
+<div class="panel empty">
+  <p>Записей нет. Когда клиенты запишутся на сайте, они появятся здесь.</p>
+</div>
+<% } %>
+
+<% for (const group of it.groups) { %>
+<section class="panel day-group" aria-labelledby="d-<%= group.date %>">
+  <h2 class="day-group__title" id="d-<%= group.date %>"><%= group.label %><% if (group.isToday) { %> <span class="tag tag--accent">сегодня</span><% } %></h2>
+  <ul class="booking-list">
+<% for (const b of group.items) { %>
+    <li class="booking-row status-<%= b.status %>" data-row>
+      <div class="booking-row__time"><%= b.time %></div>
+      <div class="booking-row__main">
+        <p class="booking-row__title"><%= b.service_title %><% if (b.effect_name) { %> · <%= b.effect_name %><% } %> <span class="muted">· <%= b.price_byn %> BYN</span></p>
+        <p class="booking-row__client"><%= b.client_name %>, <a href="<%= b.contact.startsWith('@') ? 'https://t.me/' + b.contact.slice(1) : 'tel:' + b.contact.replace(/[^\d+]/g, '') %>"<%~ b.contact.startsWith('@') ? ' target="_blank" rel="noopener"' : '' %>><%= b.contact %></a></p>
+<% if (b.comment) { %><p class="booking-row__comment">«<%= b.comment %>»</p><% } %>
+        <p class="booking-row__meta muted"><%= b.source === 'admin' ? 'добавлена вручную' : 'с сайта' %> · заявка <%= b.createdLocal %></p>
+      </div>
+      <div class="booking-row__actions">
+        <label class="sr-only" for="st-<%= b.id %>">Статус записи <%= b.client_name %></label>
+        <select id="st-<%= b.id %>" class="select status-select" data-status-url="/admin/api/bookings/<%= b.id %>/status">
+<% for (const s of it.statuses) { %>
+          <option value="<%= s.value %>"<%~ s.value === b.status ? ' selected' : '' %>><%= s.label %></option>
+<% } %>
+        </select>
+<% if (b.status !== 'cancelled') { %>
+        <button type="button" class="btn btn--ghost btn--sm" data-api-post="/admin/api/bookings/<%= b.id %>/status" data-body='{"status":"cancelled"}' data-confirm="Отменить запись <%= b.client_name %> на <%= b.time %>? Время снова станет свободным." data-confirm-ok="Отменить запись" data-reload>Отменить</button>
+<% } %>
+      </div>
+    </li>
+<% } %>
+  </ul>
+</section>
+<% } %>
+
+<dialog class="admin-dialog" id="booking-dialog" aria-labelledby="booking-dialog-title">
+  <form class="admin-form" data-api action="/admin/api/bookings" data-reset>
+    <div class="admin-dialog__head">
+      <h2 class="h3" id="booking-dialog-title">Новая запись</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="form-grid">
+      <div class="field field--wide">
+        <label for="b-service">Услуга</label>
+        <select id="b-service" name="service_id" class="select" required>
+          <option value="">Выберите услугу</option>
+<% for (const s of it.services) { %>
+          <option value="<%= s.id %>"><%= s.title %> · <%= s.price_byn %> BYN · <%= s.duration_min %> мин<%= s.is_active ? '' : ' (скрыта)' %></option>
+<% } %>
+        </select>
+        <p class="field-error" data-error-for="service_id"></p>
+      </div>
+      <div class="field">
+        <label for="b-date">Дата</label>
+        <input id="b-date" name="date" type="date" required value="<%= it.today %>">
+        <p class="field-error" data-error-for="date"></p>
+      </div>
+      <div class="field">
+        <label for="b-time">Время начала</label>
+        <input id="b-time" name="time" type="time" required step="300">
+        <p class="field-error" data-error-for="time"></p>
+      </div>
+      <div class="field">
+        <label for="b-name">Имя клиента</label>
+        <input id="b-name" name="client_name" required maxlength="60">
+        <p class="field-error" data-error-for="client_name"></p>
+      </div>
+      <div class="field">
+        <label for="b-contact">Телефон или Telegram</label>
+        <input id="b-contact" name="contact" required maxlength="40">
+        <p class="field-error" data-error-for="contact"></p>
+      </div>
+      <div class="field">
+        <label for="b-effect">Эффект</label>
+        <select id="b-effect" name="effect_slug" class="select">
+          <option value="">Не выбран</option>
+<% for (const e of it.effects) { %><option value="<%= e.slug %>"><%= e.name %></option><% } %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="b-status">Статус</label>
+        <select id="b-status" name="status" class="select">
+          <option value="confirmed">Подтверждена</option>
+          <option value="new">Новая</option>
+        </select>
+      </div>
+      <div class="field field--wide">
+        <label for="b-comment">Комментарий</label>
+        <textarea id="b-comment" name="comment" rows="2" maxlength="500"></textarea>
+      </div>
+      <label class="check field--wide"><input type="checkbox" name="force"> Записать, даже если время занято или вне рабочих часов</label>
+    </div>
+    <p class="form-error" data-form-error role="alert"></p>
+    <div class="admin-dialog__foot">
+      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
+      <button type="submit" class="btn btn--dark">Добавить запись</button>
+    </div>
+  </form>
+</dialog>

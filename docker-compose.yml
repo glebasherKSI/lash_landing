@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # .env монтируется файлом: так символы $ в argon2-хеше не интерпретируются Compose
+      - ./.env:/app/.env:ro
+      - ./data:/app/data
+      - ./public/uploads:/app/public/uploads
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0

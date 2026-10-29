@@ -1,0 +1,330 @@
+<% layout('./layout') %>
+<% const s = it.settings %>
+<div class="page">
+
+  <!-- 1. Первый экран -->
+  <header class="hero" id="top">
+    <div class="hero__main">
+      <div class="topbar">
+        <a class="logo" href="#top">
+          <span aria-hidden="true"><%= s.studio_name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2) %></span>
+          <span class="sr-only"><%= s.studio_name %>, наверх</span>
+        </a>
+        <nav class="pill-nav" aria-label="Разделы">
+          <a href="#services">Услуги</a>
+          <a href="#effect" class="pill-nav__optional">Эффект</a>
+          <a href="#works">Работы</a>
+          <a href="#booking" class="pill-nav__accent">Запись</a>
+        </nav>
+      </div>
+
+      <div class="hero__copy">
+        <p class="eyebrow"><%= s.studio_name %> · <%= s.master_name %></p>
+        <h1 class="hero__title">
+<% for (const line of it.titleLines) { %>
+          <span class="line"><span class="line__inner"><%= line %></span></span>
+<% } %>
+        </h1>
+        <p class="hero__lead"><%= s.hero_subtitle %></p>
+      </div>
+
+      <ul class="hero-services" aria-label="Популярные услуги">
+<% for (const svc of it.heroServices) { %>
+        <li>
+          <a class="hero-service" href="#booking" data-pick-service="<%= svc.id %>">
+            <span class="hero-service__icon g-<%= svc.gradient %>" aria-hidden="true"><svg><use href="#i-lash"/></svg></span>
+            <span class="hero-service__text">
+              <span class="hero-service__title"><%= svc.title %></span>
+              <span class="hero-service__meta"><%= it.formatDuration(svc.duration_min) %></span>
+            </span>
+            <span class="tag<%= svc.is_popular ? ' tag--accent' : '' %>"><%= svc.is_popular ? 'популярное' : `${svc.price_byn} BYN` %></span>
+            <span class="round-arrow" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+          </a>
+        </li>
+<% } %>
+      </ul>
+    </div>
+
+    <div class="hero__visual">
+      <div class="photo-card<%= it.heroWork ? '' : ' photo-card--illustration' %>" data-parallax<% if (it.heroWork) { %> data-hero-window data-fx="<%= it.heroWork.focus_x %>" data-fy="<%= it.heroWork.focus_y %>" data-ww="<%= it.heroWork.window_w %>"<% } %>>
+        <%~ include('../partials/hero-photo', { work: it.heroWork, heroLashes: it.heroLashes, almondPath: it.almondPath, windowBox: it.windowBox, lidPath: it.lidPath, lowerLidPath: it.lowerLidPath, illustrationLashes: it.initialLashes }) %>
+
+        <div class="photo-card__top">
+          <p class="glass-chip reveal-chip">
+            <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
+            <span><span class="glass-chip__label">Мы тут</span> <%= s.metro || s.address || s.city %></span>
+          </p>
+          <ul class="socials reveal-chip" aria-label="Соцсети">
+<% if (s.instagram) { %><li><a class="icon-btn" href="<%= s.instagram %>" target="_blank" rel="noopener" aria-label="Instagram"><svg aria-hidden="true"><use href="#i-instagram"/></svg></a></li><% } %>
+<% if (it.telegramUrl) { %><li><a class="icon-btn" href="<%= it.telegramUrl %>" target="_blank" rel="noopener" aria-label="Telegram"><svg aria-hidden="true"><use href="#i-telegram"/></svg></a></li><% } %>
+<% if (s.whatsapp) { %><li><a class="icon-btn" href="<%= s.whatsapp %>" target="_blank" rel="noopener" aria-label="WhatsApp"><svg aria-hidden="true"><use href="#i-whatsapp"/></svg></a></li><% } %>
+          </ul>
+        </div>
+
+        <div class="photo-card__bottom">
+<% if (it.nearest) { %>
+          <a class="glass-tile reveal-chip" href="#booking" data-pick-service="<%= it.nearest.serviceId %>" data-pick-date="<%= it.nearest.date %>" data-pick-time="<%= it.nearest.time %>">
+            <span class="glass-tile__label"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Ближайшее окно</span>
+            <span class="glass-tile__value"><%= it.nearest.dayText %>, <%= it.nearest.time %></span>
+          </a>
+<% } else { %>
+          <p class="glass-tile reveal-chip">
+            <span class="glass-tile__label"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Ближайшее окно</span>
+            <span class="glass-tile__value">уточните у мастера</span>
+          </p>
+<% } %>
+          <div class="photo-card__actions reveal-chip">
+<% if (it.telegramUrl || it.phoneHref) { %>
+            <a class="glass-chip glass-chip--link" href="<%= it.telegramUrl || it.phoneHref %>"<%~ it.telegramUrl ? ' target="_blank" rel="noopener"' : '' %>>
+              <svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>Напишите мне
+            </a>
+<% } %>
+            <a class="btn btn--dark" href="#booking">Записаться</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- 2. Почему я -->
+    <section class="section why" aria-labelledby="why-title" data-reveal>
+<% const why = s.why_items; const icons = ['i-eye', 'i-shield', 'i-feather', 'i-sparkle']; %>
+      <div class="why__center">
+        <div class="rings" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="why__heading">
+          <h2 id="why-title" class="h2"><%= s.why_title %></h2>
+          <p><%= s.master_name %>, <%= s.city %></p>
+        </div>
+      </div>
+      <div class="why__col">
+<% for (const [i, item] of why.slice(0, 2).entries()) { %>
+        <article class="card why-card">
+          <span class="why-card__icon" aria-hidden="true"><svg><use href="#<%= icons[i] %>"/></svg></span>
+          <h3><%= item.title %></h3>
+          <p><%= item.text %></p>
+        </article>
+<% } %>
+      </div>
+      <div class="why__col">
+<% for (const [i, item] of why.slice(2, 4).entries()) { %>
+        <article class="card why-card">
+          <span class="why-card__icon" aria-hidden="true"><svg><use href="#<%= icons[i + 2] %>"/></svg></span>
+          <h3><%= item.title %></h3>
+          <p><%= item.text %></p>
+        </article>
+<% } %>
+      </div>
+    </section>
+
+    <!-- 3. Услуги -->
+    <section class="section services" id="services" aria-labelledby="services-title" data-reveal>
+      <div class="section-head">
+        <h2 id="services-title" class="eyebrow">Услуги и цены</h2>
+        <div class="tabs" role="tablist" aria-label="Категории услуг">
+<% for (const [i, tab] of it.tabs.entries()) { %>
+          <button class="tab" role="tab" id="tab-<%= tab.id %>" aria-controls="panel-<%= tab.id %>" aria-selected="<%= i === 0 %>" tabindex="<%= i === 0 ? 0 : -1 %>"><%= tab.name %></button>
+<% } %>
+          <span class="tabs__indicator" aria-hidden="true"></span>
+        </div>
+      </div>
+<% for (const [i, tab] of it.tabs.entries()) { %>
+      <div class="bento" role="tabpanel" id="panel-<%= tab.id %>" aria-labelledby="tab-<%= tab.id %>"<%~ i === 0 ? '' : ' hidden' %>>
+<% for (const svc of tab.services) { %>
+        <a class="svc-card g-<%= svc.gradient %> tile-<%= svc.tile %>" href="#booking" data-pick-service="<%= svc.id %>">
+          <span class="svc-card__top">
+            <span class="svc-card__title"><%= svc.title %></span>
+<% if (svc.is_popular) { %><span class="tag tag--accent">популярное</span><% } %>
+          </span>
+          <span class="svc-card__price">от <%= svc.price_byn %> BYN</span>
+          <span class="svc-card__desc"><%= svc.description %></span>
+          <span class="svc-card__bottom">
+            <span class="tag tag--glass"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><%= it.formatDuration(svc.duration_min) %></span>
+            <span class="round-arrow" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+          </span>
+          <span class="sr-only">: записаться</span>
+        </a>
+<% } %>
+<% if (s.instagram) { %>
+        <a class="svc-card svc-card--insta tile-1x1" href="<%= s.instagram %>" target="_blank" rel="noopener">
+          <span class="svc-card__top"><svg class="svc-card__insta-icon" aria-hidden="true"><use href="#i-instagram"/></svg></span>
+          <span class="svc-card__title">Больше работ в&nbsp;Instagram</span>
+          <span class="svc-card__bottom">
+            <span class="svc-card__meta">@<%= s.instagram.replace(/\/+$/, '').split('/').pop() %></span>
+            <span class="round-arrow" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+          </span>
+        </a>
+<% } %>
+      </div>
+<% } %>
+    </section>
+
+    <!-- 4. Конструктор эффекта -->
+<% if (it.initialEffect) { %>
+    <section class="section effect" id="effect" aria-labelledby="effect-title" data-reveal>
+      <div class="effect__text">
+        <p class="eyebrow">Конструктор эффекта</p>
+        <h2 id="effect-title" class="h2">Какой эффект подойдёт вам</h2>
+        <div class="chips" role="group" aria-label="Эффект">
+<% for (const effect of it.effects) { %>
+          <button type="button" class="chip" data-effect="<%= effect.slug %>" aria-pressed="<%= effect.slug === it.initialEffect.slug %>"><%= effect.name %></button>
+<% } %>
+        </div>
+        <p class="effect__desc" id="effect-desc" aria-live="polite"><%= it.initialEffect.description %></p>
+        <a class="btn btn--dark" href="#booking" data-effect-cta>Записаться с этим эффектом</a>
+      </div>
+
+      <figure class="effect__scheme card">
+        <svg class="scheme" viewBox="0 20 600 280" role="img" aria-labelledby="scheme-title">
+          <title id="scheme-title">Схема длины ресниц для выбранного эффекта</title>
+          <path d="<%= it.lowerLidPath %>" class="scheme__lower"/>
+          <circle cx="300" cy="215" r="46" class="scheme__iris"/>
+          <circle cx="300" cy="215" r="17" class="scheme__pupil"/>
+          <path class="scheme__lash scheme__lash--thin" data-lash-line="1" d="<%= it.initialLashes[1].d %>"/>
+          <path class="scheme__lash" data-lash-line="0" d="<%= it.initialLashes[0].d %>"/>
+          <path d="<%= it.lidPath %>" class="scheme__lid"/>
+        </svg>
+        <p class="scheme__labels" aria-hidden="true"><span>внутренний угол</span><span>внешний угол</span></p>
+        <figcaption class="bars" aria-label="Длина ресниц по зонам, мм">
+<% for (const [i, mm] of it.initialEffect.profile.entries()) { %>
+          <span class="bar">
+            <span class="bar__track"><span class="bar__fill" data-bar="<%= i %>" data-ratio="<%= it.barRatio(mm) %>"></span></span>
+            <span class="bar__value" data-bar-value="<%= i %>"><%= mm %> мм</span>
+          </span>
+<% } %>
+        </figcaption>
+      </figure>
+    </section>
+<% } %>
+
+    <!-- 5. Работы -->
+<% if (it.works.length) { %>
+    <section class="section works" id="works" aria-labelledby="works-title" data-reveal>
+      <div class="section-head section-head--row">
+        <h2 id="works-title" class="h2">Работы</h2>
+<% if (s.instagram) { %><a class="link-arrow" href="<%= s.instagram %>" target="_blank" rel="noopener">Ещё в Instagram <span class="round-arrow round-arrow--sm" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span></a><% } %>
+      </div>
+      <ul class="works__grid">
+<% for (const [i, work] of it.works.entries()) { %>
+        <li>
+          <button type="button" class="work" data-lightbox="<%= i %>" data-full="<%= work.src %>" data-caption="<%= work.caption %>" data-width="<%= work.width %>" data-height="<%= work.height %>" aria-label="Открыть фото<%= work.caption ? ': ' + work.caption : ` ${i + 1}` %>">
+            <img src="<%= work.thumb %>" width="600" height="<%= work.thumbHeight %>" loading="lazy" decoding="async" alt="">
+<% if (work.caption) { %><span class="work__caption" aria-hidden="true"><%= work.caption %></span><% } %>
+          </button>
+        </li>
+<% } %>
+      </ul>
+    </section>
+<% } %>
+
+    <!-- 6. Визит, правила, подготовка, отзывы -->
+    <section class="section visit" aria-labelledby="visit-title" data-reveal>
+      <h2 id="visit-title" class="h2">Как проходит визит</h2>
+      <ol class="steps">
+        <li class="steps__line" aria-hidden="true" role="presentation"><span></span></li>
+<% for (const [i, step] of s.visit_steps.entries()) { %>
+        <li class="card step">
+          <span class="step__num" aria-hidden="true">0<%= i + 1 %></span>
+          <h3><%= step.title %></h3>
+          <p><%= step.text %></p>
+        </li>
+<% } %>
+      </ol>
+    </section>
+
+    <section class="section rules" aria-labelledby="rules-title" data-reveal>
+      <div class="rules__col">
+        <h2 id="rules-title" class="h2">Правила записи</h2>
+        <ul class="rules__grid">
+<% for (const rule of s.rules) { %>
+          <li class="card rule">
+            <h3><%= rule.title %></h3>
+            <p><%= rule.text %></p>
+          </li>
+<% } %>
+        </ul>
+      </div>
+<% if (s.checklist.length) { %>
+      <div class="card checklist g-pink">
+        <h2 class="h3">Как подготовиться</h2>
+        <ul>
+<% for (const item of s.checklist) { %>
+          <li><span class="checklist__mark" aria-hidden="true"><svg><use href="#i-check"/></svg></span><%= item %></li>
+<% } %>
+        </ul>
+      </div>
+<% } %>
+    </section>
+
+<% if (it.reviews.length) { %>
+    <section class="section reviews" aria-labelledby="reviews-title" data-reveal>
+      <h2 id="reviews-title" class="h2">Отзывы</h2>
+      <ul class="reviews__grid">
+<% for (const review of it.reviews) { %>
+        <li class="card review">
+          <p class="review__stars" role="img" aria-label="Оценка <%= review.rating %> из 5">
+<% for (let i = 0; i < 5; i++) { %><svg class="<%= i < review.rating ? 'on' : '' %>" aria-hidden="true"><use href="#i-star"/></svg><% } %>
+          </p>
+          <blockquote><p><%= review.text %></p></blockquote>
+          <p class="review__author"><%= review.author %></p>
+        </li>
+<% } %>
+      </ul>
+    </section>
+<% } %>
+
+    <!-- 7. Онлайн-запись -->
+    <%~ include('./booking', it) %>
+  </main>
+</div>
+
+<a class="float-cta" href="#booking" data-float-cta tabindex="-1" aria-hidden="true">
+  Записаться<% if (it.nearest) { %> <span class="float-cta__hint">· <%= it.nearest.dayText %>, <%= it.nearest.time %></span><% } %>
+  <span class="round-arrow round-arrow--sm" aria-hidden="true"><svg><use href="#i-arrow"/></svg></span>
+</a>
+
+<!-- 8. Футер -->
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__brand">
+      <p class="footer__studio"><%= s.studio_name %></p>
+      <p class="footer__muted">Наращивание ресниц · <%= s.master_name %></p>
+    </div>
+    <div class="footer__col">
+      <h2 class="footer__title">Адрес</h2>
+      <p><%= s.city %><%= s.address ? `, ${s.address}` : '' %></p>
+<% if (s.metro) { %><p class="footer__muted"><%= s.metro %></p><% } %>
+    </div>
+    <div class="footer__col">
+      <h2 class="footer__title">Часы работы</h2>
+      <ul>
+<% for (const group of it.hours) { %>
+        <li><span class="footer__day"><%= group.label %></span> <span class="<%= group.isWorking ? '' : 'footer__muted' %>"><%= group.text %></span></li>
+<% } %>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <h2 class="footer__title">Связь</h2>
+      <ul>
+<% if (s.phone) { %><li><a href="<%= it.phoneHref %>"><%= s.phone %></a></li><% } %>
+<% if (s.telegram) { %><li><a href="<%= it.telegramUrl %>" target="_blank" rel="noopener">Telegram @<%= s.telegram %></a></li><% } %>
+<% if (s.instagram) { %><li><a href="<%= s.instagram %>" target="_blank" rel="noopener">Instagram</a></li><% } %>
+<% if (s.whatsapp) { %><li><a href="<%= s.whatsapp %>" target="_blank" rel="noopener">WhatsApp</a></li><% } %>
+      </ul>
+    </div>
+  </div>
+  <p class="footer__copy">© <%= new Date().getFullYear() %> <%= s.studio_name %></p>
+</footer>
+
+<dialog class="lightbox" id="lightbox" aria-label="Просмотр фото">
+  <figure class="lightbox__figure">
+    <img class="lightbox__img" alt="">
+    <figcaption class="lightbox__caption"></figcaption>
+  </figure>
+  <button type="button" class="icon-btn lightbox__close" data-lightbox-close aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+  <button type="button" class="icon-btn lightbox__prev" data-lightbox-prev aria-label="Предыдущее фото"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+  <button type="button" class="icon-btn lightbox__next" data-lightbox-next aria-label="Следующее фото"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+</dialog>
+
+<script type="application/json" id="page-data"><%~ JSON.stringify(it.clientData).replace(/</g, '\\u003c') %></script>
