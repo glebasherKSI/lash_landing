@@ -1,11 +1,12 @@
 /**
  * Плавающая кнопка «Записаться»: появляется, когда первый экран ушёл вверх,
- * и прячется, пока на экране форма записи или футер.
+ * и прячется, пока на экране конструктор эффекта, форма записи или футер.
  */
 export const initFloatCta = () => {
   const button = document.querySelector('[data-float-cta]');
   const hero = document.querySelector('.hero');
-  const blockers = [document.getElementById('booking'), document.querySelector('.footer')].filter(Boolean);
+  // В конструкторе эффекта своя кнопка записи, плавающая её бы перекрывала
+  const blockers = [document.getElementById('booking'), document.getElementById('effect'), document.querySelector('.footer')].filter(Boolean);
   if (!button || !hero || !('IntersectionObserver' in window)) return;
 
   let heroVisible = true;

@@ -563,8 +563,15 @@ a.glass-tile:hover { background: var(--white); }
   .photo-card { min-height: 0; height: auto; aspect-ratio: 4 / 5; max-height: min(720px, 72svh); }
   .why { grid-template-columns: 1fr 1fr; }
   .why__center { grid-column: 1 / -1; grid-row: 1; width: min(100%, 360px); justify-self: center; }
-  .effect { grid-template-columns: 1fr; }
-  .effect__desc { min-height: 0; }
+  /* Конструктор на узком экране: чипы прямо над схемой, чтобы перестройку было видно сразу */
+  .effect { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .effect__text { display: contents; }
+  .effect .eyebrow { order: 0; }
+  .effect .h2 { order: 1; margin-bottom: 8px; }
+  .effect .chips { order: 2; }
+  .effect__scheme { order: 3; }
+  .effect__desc { order: 4; min-height: 0; font-size: 16px; }
+  .effect [data-effect-cta] { order: 5; }
   .rules { grid-template-columns: 1fr; }
   .booking__layout { grid-template-columns: 1fr; }
   .summary { position: static; }
@@ -583,6 +590,17 @@ a.glass-tile:hover { background: var(--white); }
 }
 
 @media (max-width: 560px) {
+  .effect .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .effect .chip { justify-content: center; padding: 0 12px; }
+  .effect__scheme { padding: 16px 12px 18px; gap: 12px; border-radius: var(--r-card-sm); }
+  /* ресницы на мелкой схеме чуть плотнее, иначе выглядят волосками */
+  .scheme__lash { stroke: var(--text); stroke-width: .7px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .scheme__lash--thin { stroke: #3D3D47; }
+  .scheme__labels { margin-top: -4px; padding: 0 4px; }
+  .bar__track { height: 56px; border-radius: 10px; }
+  .bar__fill { border-radius: 10px; }
+  .bar { gap: 6px; }
+  .effect [data-effect-cta] { width: 100%; }
   .topbar { flex-wrap: wrap; }
   .pill-nav { flex: 1; min-width: 0; }
   .pill-nav a { padding: 0 14px; }
