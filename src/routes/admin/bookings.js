@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { BOOKING_STATUSES, getBooking, listBookings, setBookingStatus } from '../../db/repos/bookings.js';
+import { BOOKING_STATUSES, countBookingsByStatus, getBooking, listBookings, setBookingStatus } from '../../db/repos/bookings.js';
 import { listEffects, listServices } from '../../db/repos/catalog.js';
 import { BookingError, createBooking } from '../../lib/booking.js';
 import { addDays, formatDateLong, formatTime, formatTimestampLocal, todayISO } from '../../lib/time.js';
@@ -26,7 +26,13 @@ bookingsRouter.get('/bookings', (req, res) => {
   for (const booking of bookings) {
     let group = groups.at(-1);
     if (group?.date !== booking.date) {
-      group = { date: booking.date, label: formatDateLong(booking.date), isToday: booking.date === today, items: [] };
+      group = {
+        date: booking.date,
+        label: formatDateLong(booking.date),
+        isToday: booking.date === today,
+        isTomorrow: booking.date === addDays(today, 1),
+        items: [],
+      };
       groups.push(group);
     }
     group.items.push({
@@ -43,6 +49,9 @@ bookingsRouter.get('/bookings', (req, res) => {
     period,
     periods: Object.entries(PERIODS).map(([value, p]) => ({ value, label: p.label })),
     statuses: BOOKING_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] })),
+    statusCounts: countBookingsByStatus(),
+    statusLabels: STATUS_LABELS,
+    total: bookings.length,
     services: listServices(),
     effects: listEffects(),
     today,

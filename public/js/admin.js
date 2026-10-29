@@ -93,6 +93,8 @@ const showFormErrors = (form, errors = {}) => {
     for (let n = parts.length; n > 0 && !box; n--) box = form.querySelector(`[data-error-for="${parts.slice(0, n).join('.')}"]`);
     const input = form.querySelector(`[name="${pathToName(path)}"]`) ?? form.querySelector(`[name="${parts[0]}"]`);
     input?.setAttribute('aria-invalid', 'true');
+    // ошибка в свёрнутом разделе: раскрываем его
+    (input ?? box)?.closest('details')?.setAttribute('open', '');
     if (box) box.textContent = message;
     first ??= input ?? box;
   }
@@ -116,6 +118,7 @@ document.addEventListener('submit', async (event) => {
       toast(result.message || 'Не сохранилось', 'error');
       return;
     }
+    form.dispatchEvent(new CustomEvent('api:success', { detail: result }));
     if (form.hasAttribute('data-reset')) form.reset();
     if (form.hasAttribute('data-reload') || result.reload) return reloadWithFlash(result.message);
     toast(result.message || 'Сохранено');
@@ -157,14 +160,25 @@ document.addEventListener('change', async (event) => {
     return toast(result.message);
   }
 
-  const status = event.target.closest('[data-status-url]');
-  if (status) {
-    const result = await post(status.dataset.statusUrl, { status: status.value });
-    if (!result.ok) return toast(result.message, 'error');
-    const row = status.closest('[data-row]');
-    row.className = row.className.replace(/status-\w+/, `status-${status.value}`);
-    toast(result.message);
-  }
+});
+
+/* ---------- Записи: быстрые кнопки статуса ---------- */
+
+const STATUS_LABELS = { new: 'Новая', confirmed: 'Подтверждена', cancelled: 'Отменена', done: 'Выполнена' };
+
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-status-to]');
+  if (!button) return;
+  const card = button.closest('[data-booking]');
+  if (button.dataset.confirm && !(await confirmAction(button.dataset.confirm, button.dataset.confirmOk))) return;
+  const status = button.dataset.statusTo;
+  button.disabled = true;
+  const result = await post(`/admin/api/bookings/${card.dataset.booking}/status`, { status });
+  button.disabled = false;
+  if (!result.ok) return toast(result.message, 'error');
+  card.className = card.className.replace(/status-\w+/, `status-${status}`);
+  card.querySelector('[data-status-pill]').textContent = STATUS_LABELS[status];
+  toast(result.message);
 });
 
 /* ---------- Диалоги ---------- */
@@ -173,6 +187,8 @@ document.addEventListener('click', (event) => {
   const opener = event.target.closest('[data-open-dialog]');
   if (opener) document.getElementById(opener.dataset.openDialog)?.showModal();
   if (event.target.closest('[data-close-dialog]')) event.target.closest('dialog')?.close();
+  // нажатие на затемнение вокруг шторки
+  if (event.target.matches('dialog.admin-dialog')) event.target.close();
 });
 
 // Редактор услуги: одна форма для создания и правки
@@ -186,6 +202,13 @@ document.addEventListener('click', (event) => {
   clearFormErrors(form);
   form.action = data ? `/admin/api/services/${data.id}` : '/admin/api/services';
   serviceDialog.querySelector('#service-dialog-title').textContent = data ? 'Изменить услугу' : 'Новая услуга';
+  // Удаление доступно только при правке существующей услуги
+  const deleteButton = serviceDialog.querySelector('[data-service-delete]');
+  deleteButton.hidden = !data;
+  if (data) {
+    deleteButton.dataset.apiPost = `/admin/api/services/${data.id}/delete`;
+    deleteButton.dataset.confirm = `Удалить услугу «${data.title}»? Прошлые записи на неё сохранятся.`;
+  }
   const values = data ?? { gradient: 'gray', tile: '1x1', is_active: true, is_popular: false };
   for (const [key, value] of Object.entries(values)) {
     const field = form.elements[key];
@@ -195,7 +218,21 @@ document.addEventListener('click', (event) => {
     else field.value = value ?? '';
   }
   serviceDialog.showModal();
-  form.elements.title.focus();
+  // на телефоне фокус на поле сразу открывает клавиатуру — только для новой услуги
+  if (!data) form.elements.title.focus();
+});
+
+/* ---------- Режим «Порядок»: стрелки вместо переключателей ---------- */
+
+document.addEventListener('click', (event) => {
+  const toggle = event.target.closest('[data-reorder-toggle]');
+  if (!toggle) return;
+  const scope = toggle.closest('[data-reorder-scope]');
+  const on = !scope.classList.contains('is-reordering');
+  scope.classList.toggle('is-reordering', on);
+  toggle.setAttribute('aria-pressed', String(on));
+  toggle.querySelector('[data-reorder-label]').textContent = on ? 'Готово' : 'Порядок';
+  scope.querySelector('[data-reorder-hint]')?.toggleAttribute('hidden', !on);
 });
 
 /* ---------- Сортировка: перетаскивание и кнопки ---------- */
@@ -410,4 +447,64 @@ if (mapPreview) {
     mapPreview.href = custom || (query ? `https://yandex.by/maps/?text=${encodeURIComponent(query)}` : '#');
   };
   ['city', 'address', 'map_url'].forEach((name) => form.elements[name].addEventListener('input', update));
+}
+
+/* ---------- Шторка фото в «Работах» ---------- */
+
+const workSheet = document.getElementById('work-sheet');
+if (workSheet) {
+  const form = workSheet.querySelector('[data-work-form]');
+  const img = workSheet.querySelector('[data-work-img]');
+  const heroButton = workSheet.querySelector('[data-work-hero]');
+  const focusButton = workSheet.querySelector('[data-work-focus]');
+  const deleteButton = workSheet.querySelector('[data-work-delete]');
+  const list = document.querySelector('.works-admin');
+  let tile = null;
+  let work = null;
+
+  document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-work]');
+    if (!opener) return;
+    work = JSON.parse(opener.dataset.work);
+    tile = opener.closest('[data-id]');
+    clearFormErrors(form);
+    form.action = `/admin/api/works/${work.id}`;
+    form.elements.caption.value = work.caption;
+    img.src = work.thumb;
+    heroButton.hidden = work.isHero;
+    focusButton.hidden = !work.isHero;
+    // «На первый экран» обрабатывает общий data-api-post: сервер вернёт переход к настройке окна
+    heroButton.dataset.apiPost = `/admin/api/works/${work.id}/hero`;
+    workSheet.showModal();
+  });
+
+  // Подпись сохранилась: обновляем плитку без перезагрузки
+  form.addEventListener('api:success', () => {
+    const caption = form.elements.caption.value.trim();
+    work = { ...work, caption };
+    tile.querySelector('[data-caption]').textContent = caption || 'без подписи';
+    tile.querySelector('[data-work]').dataset.work = JSON.stringify(work);
+  });
+
+  focusButton.addEventListener('click', () => workSheet.close());
+
+  deleteButton.addEventListener('click', async () => {
+    if (!(await confirmAction(deleteButton.dataset.confirm))) return;
+    const result = await post(`/admin/api/works/${work.id}/delete`);
+    if (!result.ok) return toast(result.message, 'error');
+    workSheet.close();
+    tile.remove();
+    toast(result.message);
+  });
+
+  workSheet.querySelectorAll('[data-work-move]').forEach((button) =>
+    button.addEventListener('click', () => {
+      const up = button.dataset.workMove === 'up';
+      const sibling = up ? tile.previousElementSibling : tile.nextElementSibling;
+      if (!sibling) return toast(up ? 'Это фото уже первое' : 'Это фото уже последнее');
+      if (up) sibling.before(tile);
+      else sibling.after(tile);
+      saveOrder(list);
+    }),
+  );
 }

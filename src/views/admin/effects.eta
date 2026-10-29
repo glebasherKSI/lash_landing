@@ -1,12 +1,44 @@
 <% layout('./layout') %>
-<div class="admin-head">
-  <h1 class="h2">Эффекты</h1>
-</div>
-<p class="admin-lead muted">Эффекты в конструкторе на сайте. Профиль задаёт длину ресниц в мм в пяти точках: от внутреннего угла к внешнему. Схема обновляется сразу, пока вы меняете числа.</p>
+<header class="page-head">
+  <h1 class="page-title">Эффекты</h1>
+</header>
+<p class="page-lead muted">Эффекты в конструкторе на сайте. Профиль задаёт длину ресниц в мм в пяти точках, от внутреннего угла к внешнему. Схема меняется сразу, пока вы правите числа.</p>
 
 <% const effectForm = (e, isNew) => { %>
-<form class="panel effect-form admin-form" data-api action="<%= isNew ? '/admin/api/effects' : '/admin/api/effects/' + e.id %>"<%~ isNew ? ' data-reload data-reset' : '' %> data-effect-form>
-  <div class="effect-form__fields">
+<details class="panel acc"<%~ isNew ? ' data-new-effect' : '' %>>
+  <summary class="acc__head">
+<% if (isNew) { %>
+    <span class="acc__title"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Новый эффект</span>
+<% } else { %>
+    <span class="acc__title"><%= e.name %><% if (!e.is_active) { %> <span class="tag">скрыт</span><% } %></span>
+    <span class="acc__meta"><%= e.profile.join(' · ') %> мм</span>
+<% } %>
+    <svg class="acc__chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+  </summary>
+  <form class="effect-form admin-form" data-api action="<%= isNew ? '/admin/api/effects' : '/admin/api/effects/' + e.id %>"<%~ isNew ? ' data-reload data-reset' : '' %> data-effect-form>
+    <div class="effect-form__preview g-blue">
+      <svg class="scheme" viewBox="0 20 600 280" aria-hidden="true">
+        <path d="<%= it.lowerLidPath %>" class="scheme__lower"/>
+        <circle cx="300" cy="215" r="46" class="scheme__iris"/>
+        <circle cx="300" cy="215" r="17" class="scheme__pupil"/>
+        <path class="scheme__lash scheme__lash--thin" data-lash-line="1" d="<%= e.lashes[1].d %>"/>
+        <path class="scheme__lash" data-lash-line="0" d="<%= e.lashes[0].d %>"/>
+        <path d="<%= it.lidPath %>" class="scheme__lid"/>
+      </svg>
+    </div>
+    <fieldset class="field">
+      <legend>Длина ресниц, мм</legend>
+      <div class="profile-inputs">
+<% const zones = ['внутр.', '', 'центр', '', 'внешн.']; %>
+<% for (let i = 0; i < 5; i++) { %>
+        <label class="profile-input">
+          <span class="muted"><%= zones[i] || '·' %></span>
+          <input type="number" name="profile[<%= i %>]" value="<%= e.profile[i] %>" min="4" max="18" step="0.5" inputmode="decimal" required data-profile aria-label="Точка <%= i + 1 %>, мм">
+        </label>
+<% } %>
+      </div>
+      <p class="field-error" data-error-for="profile"></p>
+    </fieldset>
     <div class="form-grid">
       <div class="field">
         <label for="en-<%= e.id %>">Название</label>
@@ -15,50 +47,27 @@
       </div>
       <div class="field">
         <label for="es-<%= e.id %>">Код (латиницей)</label>
-        <input id="es-<%= e.id %>" name="slug" value="<%= e.slug %>" required pattern="[a-z][a-z0-9\-]{1,30}" maxlength="31">
+        <input id="es-<%= e.id %>" name="slug" value="<%= e.slug %>" required pattern="[a-z][a-z0-9\-]{1,30}" maxlength="31" autocapitalize="off" autocorrect="off" spellcheck="false">
         <p class="field-error" data-error-for="slug"></p>
       </div>
       <div class="field field--wide">
         <label for="ed-<%= e.id %>">Описание</label>
         <textarea id="ed-<%= e.id %>" name="description" rows="3" maxlength="400"><%= e.description %></textarea>
       </div>
-      <fieldset class="field field--wide">
-        <legend>Длина ресниц, мм</legend>
-        <div class="profile-inputs">
-<% const zones = ['Внутр. угол', '', 'Центр', '', 'Внешн. угол']; %>
-<% for (let i = 0; i < 5; i++) { %>
-          <label class="profile-input">
-            <span class="muted"><%= zones[i] || '·' %></span>
-            <input type="number" name="profile[<%= i %>]" value="<%= e.profile[i] %>" min="4" max="18" step="0.5" inputmode="decimal" required data-profile aria-label="Точка <%= i + 1 %>, мм">
-          </label>
-<% } %>
-        </div>
-        <p class="field-error" data-error-for="profile"></p>
-      </fieldset>
-      <label class="check field--wide"><input type="checkbox" name="is_active"<%~ e.is_active ? ' checked' : '' %>> Показывать на сайте</label>
+      <label class="check-row field--wide"><span>Показывать на сайте</span><span class="switch"><input type="checkbox" name="is_active"<%~ e.is_active ? ' checked' : '' %>></span></label>
     </div>
     <p class="form-error" data-form-error role="alert"></p>
-    <div class="panel__foot">
-      <button class="btn btn--dark" type="submit"><%= isNew ? 'Добавить эффект' : 'Сохранить' %></button>
+    <div class="form-actions">
 <% if (!isNew) { %>
-      <button type="button" class="btn btn--ghost btn--danger-text" data-api-post="/admin/api/effects/<%= e.id %>/delete" data-confirm="Удалить эффект «<%= e.name %>»?" data-reload>Удалить</button>
+      <button type="button" class="icon-btn icon-btn--plain icon-btn--danger" data-api-post="/admin/api/effects/<%= e.id %>/delete" data-confirm="Удалить эффект «<%= e.name %>»?" data-reload aria-label="Удалить эффект «<%= e.name %>»"><svg aria-hidden="true"><use href="#i-trash"/></svg></button>
 <% } %>
+      <button class="btn btn--dark" type="submit"><%= isNew ? 'Добавить эффект' : 'Сохранить' %></button>
     </div>
-  </div>
-  <div class="effect-form__preview g-blue">
-    <svg class="scheme" viewBox="0 20 600 280" aria-hidden="true">
-      <path d="<%= it.lowerLidPath %>" class="scheme__lower"/>
-      <circle cx="300" cy="215" r="46" class="scheme__iris"/>
-      <circle cx="300" cy="215" r="17" class="scheme__pupil"/>
-      <path class="scheme__lash scheme__lash--thin" data-lash-line="1" d="<%= e.lashes[1].d %>"/>
-      <path class="scheme__lash" data-lash-line="0" d="<%= e.lashes[0].d %>"/>
-      <path d="<%= it.lidPath %>" class="scheme__lid"/>
-    </svg>
-  </div>
-</form>
+  </form>
+</details>
 <% } %>
 
+<div class="acc-list">
 <% for (const e of it.effects) { effectForm(e, false) } %>
-
-<h2 class="h3 admin-subhead">Новый эффект</h2>
 <% effectForm({ id: 'new', name: '', slug: '', description: '', profile: [8, 9, 10, 11, 11], is_active: true, lashes: it.blankLashes }, true) %>
+</div>

@@ -1,89 +1,109 @@
 <% layout('./layout') %>
-<div class="admin-head">
-  <h1 class="h2">Расписание</h1>
-</div>
+<header class="page-head">
+  <h1 class="page-title">Расписание</h1>
+</header>
 
-<form class="panel admin-form" data-api action="/admin/api/schedule">
-  <div class="panel__head">
-    <h2 class="h3">Рабочие часы</h2>
-    <p class="muted">По этим часам сайт считает свободные окна. Процедура должна закончиться до конца рабочего дня.</p>
-  </div>
-  <div class="week">
+<form class="admin-form schedule-form" data-api action="/admin/api/schedule">
+  <section class="panel">
+    <div class="panel__bar"><h2 class="h3">Рабочие часы</h2></div>
+    <p class="muted panel__hint">По этим часам сайт считает свободные окна. Процедура должна закончиться до конца рабочего дня.</p>
+    <div class="week">
 <% for (const [i, d] of it.days.entries()) { %>
-    <div class="week__day" data-day>
-      <input type="hidden" name="days[<%= i %>][weekday]" value="<%= d.weekday %>">
-      <label class="check week__name"><input type="checkbox" name="days[<%= i %>][is_working]" data-day-toggle<%~ d.is_working ? ' checked' : '' %>> <%= d.name %></label>
-      <div class="week__hours">
-        <label class="sr-only" for="ds-<%= i %>"><%= d.name %>: начало</label>
-        <input id="ds-<%= i %>" type="time" name="days[<%= i %>][start]" value="<%= d.start %>" step="900">
-        <span aria-hidden="true">—</span>
-        <label class="sr-only" for="de-<%= i %>"><%= d.name %>: конец</label>
-        <input id="de-<%= i %>" type="time" name="days[<%= i %>][end]" value="<%= d.end %>" step="900">
-        <span class="muted week__off">выходной</span>
+      <div class="week__day" data-day>
+        <input type="hidden" name="days[<%= i %>][weekday]" value="<%= d.weekday %>">
+        <label class="week__head">
+          <span class="week__name"><%= d.name %></span>
+          <span class="week__off muted">выходной</span>
+          <span class="switch"><input type="checkbox" name="days[<%= i %>][is_working]" data-day-toggle<%~ d.is_working ? ' checked' : '' %>><span class="sr-only"><%= d.name %>: рабочий день</span></span>
+        </label>
+        <div class="week__hours">
+          <label class="time-field"><span class="time-field__label">с</span><input type="time" name="days[<%= i %>][start]" value="<%= d.start %>" step="900" aria-label="<%= d.name %>: начало"></label>
+          <label class="time-field"><span class="time-field__label">до</span><input type="time" name="days[<%= i %>][end]" value="<%= d.end %>" step="900" aria-label="<%= d.name %>: конец"></label>
+        </div>
+        <p class="field-error" data-error-for="days.<%= i %>"></p>
       </div>
-      <p class="field-error" data-error-for="days.<%= i %>"></p>
-    </div>
 <% } %>
-  </div>
+    </div>
+  </section>
 
-  <div class="form-grid form-grid--3">
-    <div class="field">
-      <label for="slot-step">Шаг слотов</label>
-      <select id="slot-step" name="slot_step_min" class="select">
+  <section class="panel">
+    <div class="panel__bar"><h2 class="h3">Запись на сайте</h2></div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="slot-step">Шаг времени</label>
+        <select id="slot-step" name="slot_step_min" class="select">
 <% for (const v of [10, 15, 20, 30, 45, 60]) { %><option value="<%= v %>"<%~ v === it.slotStep ? ' selected' : '' %>><%= v %> минут</option><% } %>
-      </select>
-      <p class="field-hint">Через сколько минут предлагать время: 10:00, 10:30…</p>
+        </select>
+        <p class="field-hint">Как часто предлагать время: 10:00, 10:30…</p>
+      </div>
+      <div class="field">
+        <label for="horizon">Запись открыта на, дней</label>
+        <input id="horizon" name="booking_horizon_days" type="number" min="1" max="60" value="<%= it.horizon %>" inputmode="numeric">
+        <p class="field-error" data-error-for="booking_horizon_days"></p>
+      </div>
     </div>
-    <div class="field">
-      <label for="horizon">Запись открыта на, дней</label>
-      <input id="horizon" name="booking_horizon_days" type="number" min="1" max="60" value="<%= it.horizon %>" inputmode="numeric">
-      <p class="field-error" data-error-for="booking_horizon_days"></p>
-    </div>
+  </section>
+
+  <div class="sticky-save">
+    <p class="form-error" data-form-error role="alert"></p>
+    <button class="btn btn--dark" type="submit">Сохранить расписание</button>
   </div>
-  <p class="form-error" data-form-error role="alert"></p>
-  <div class="panel__foot"><button class="btn btn--dark" type="submit">Сохранить расписание</button></div>
 </form>
 
 <section class="panel" aria-labelledby="exc-title">
-  <div class="panel__head">
+  <div class="panel__bar">
     <h2 class="h3" id="exc-title">Выходные и особые дни</h2>
-    <p class="muted">Отпуск, больничный или день с другими часами. Исключение важнее обычного расписания.</p>
+    <button type="button" class="btn btn--ghost btn--sm" data-open-dialog="exc-dialog"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Добавить</button>
   </div>
+  <p class="muted panel__hint">Отпуск, больничный или день с другими часами. Важнее обычного расписания.</p>
 <% if (it.exceptions.length) { %>
   <ul class="exc-list">
 <% for (const e of it.exceptions) { %>
-    <li class="exc-row" data-row>
-      <span class="exc-row__date"><%= e.label %></span>
-      <span class="tag<%= e.is_day_off ? '' : ' tag--accent' %>"><%= e.hours %></span>
-      <span class="muted"><%= e.note %></span>
-      <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/schedule/exceptions/<%= e.date %>/delete" data-confirm="Убрать исключение на <%= e.label %>?" data-confirm-ok="Убрать" data-remove-row>Убрать</button>
+    <li class="list-row exc-row" data-row>
+      <span class="list-row__text">
+        <span class="list-row__title"><%= e.label %></span>
+        <span class="list-row__meta"><%= e.hours %><%= e.note ? ' · ' + e.note : '' %></span>
+      </span>
+      <button type="button" class="icon-btn icon-btn--plain icon-btn--danger" data-api-post="/admin/api/schedule/exceptions/<%= e.date %>/delete"
+              data-confirm="Убрать исключение на <%= e.label %>?" data-confirm-ok="Убрать" data-remove-row aria-label="Убрать <%= e.label %>"><svg aria-hidden="true"><use href="#i-trash"/></svg></button>
     </li>
 <% } %>
   </ul>
 <% } else { %>
   <p class="empty">Исключений нет.</p>
 <% } %>
-
-  <form class="admin-form exc-form" data-api action="/admin/api/schedule/exceptions" data-reload>
-    <div class="field">
-      <label for="exc-date">Дата</label>
-      <input id="exc-date" name="date" type="date" min="<%= it.today %>" required>
-      <p class="field-error" data-error-for="date"></p>
-    </div>
-    <label class="check"><input type="checkbox" name="is_day_off" checked data-exc-off> Выходной</label>
-    <div class="field" data-exc-hours hidden>
-      <label for="exc-start">Часы</label>
-      <div class="week__hours">
-        <input id="exc-start" name="start" type="time" value="10:00" step="900" aria-label="Начало">
-        <span aria-hidden="true">—</span>
-        <input name="end" type="time" value="19:00" step="900" aria-label="Конец">
-      </div>
-      <p class="field-error" data-error-for="start"></p>
-    </div>
-    <div class="field">
-      <label for="exc-note">Заметка</label>
-      <input id="exc-note" name="note" maxlength="120" placeholder="Например, отпуск">
-    </div>
-    <button class="btn btn--dark" type="submit">Добавить</button>
-  </form>
 </section>
+
+<dialog class="admin-dialog" id="exc-dialog" aria-labelledby="exc-dialog-title">
+  <form class="sheet admin-form" data-api action="/admin/api/schedule/exceptions" data-reload>
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="exc-dialog-title">Особый день</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="sheet__body">
+      <div class="field">
+        <label for="exc-date">Дата</label>
+        <input id="exc-date" name="date" type="date" min="<%= it.today %>" required>
+        <p class="field-error" data-error-for="date"></p>
+      </div>
+      <label class="check-row"><span>Выходной</span><span class="switch"><input type="checkbox" name="is_day_off" checked data-exc-off></span></label>
+      <div class="field" data-exc-hours hidden>
+        <span class="field__label">Часы работы</span>
+        <div class="week__hours">
+          <label class="time-field"><span class="time-field__label">с</span><input id="exc-start" name="start" type="time" value="10:00" step="900" aria-label="Начало"></label>
+          <label class="time-field"><span class="time-field__label">до</span><input name="end" type="time" value="19:00" step="900" aria-label="Конец"></label>
+        </div>
+        <p class="field-error" data-error-for="start"></p>
+      </div>
+      <div class="field">
+        <label for="exc-note">Заметка</label>
+        <input id="exc-note" name="note" maxlength="120" placeholder="Например, отпуск">
+      </div>
+      <p class="form-error" data-form-error role="alert"></p>
+    </div>
+    <div class="sheet__foot">
+      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
+      <button class="btn btn--dark" type="submit">Добавить</button>
+    </div>
+  </form>
+</dialog>

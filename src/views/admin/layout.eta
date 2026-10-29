@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#E4E5E8">
   <title><%= it.title %> · Админка</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,23 +16,31 @@
 </head>
 <body class="admin" data-csrf="<%= it.csrfToken %>">
   <%~ include('../partials/icons') %>
-<% const nav = [
-  ['/admin/bookings', 'Записи', 'i-calendar'],
-  ['/admin/services', 'Услуги', 'i-lash'],
-  ['/admin/works', 'Работы', 'i-eye'],
-  ['/admin/schedule', 'Расписание', 'i-clock'],
-  ['/admin/effects', 'Эффекты', 'i-sparkle'],
-  ['/admin/settings', 'Настройки', 'i-feather'],
-] %>
+<%
+  // Основные разделы: в нижней панели на телефоне и в боковом меню на компьютере
+  const tabs = [
+    ['/admin/bookings', 'Записи', 'i-calendar'],
+    ['/admin/services', 'Услуги', 'i-lash'],
+    ['/admin/works', 'Работы', 'i-image'],
+    ['/admin/schedule', 'Расписание', 'i-clock'],
+  ];
+  const extra = [
+    ['/admin/effects', 'Эффекты', 'i-sparkle'],
+    ['/admin/settings', 'Настройки', 'i-gear'],
+  ];
+  const isCurrent = (href) => it.currentPath.startsWith(href);
+  const inExtra = extra.some(([href]) => isCurrent(href));
+  const initials = (it.studioName || 'OL').split(/\s+/).map((w) => w[0]).join('').slice(0, 2);
+%>
   <div class="admin-shell">
-    <header class="admin-side">
+    <aside class="admin-side">
       <div class="admin-brand">
-        <span class="logo logo--sm" aria-hidden="true"><%= (it.studioName || 'OL').split(/\s+/).map((w) => w[0]).join('').slice(0, 2) %></span>
+        <span class="logo logo--sm" aria-hidden="true"><%= initials %></span>
         <span class="admin-brand__name"><%= it.studioName %></span>
       </div>
       <nav class="admin-nav" aria-label="Разделы админки">
-<% for (const [href, label, icon] of nav) { %>
-        <a href="<%= href %>"<%~ it.currentPath.startsWith(href) ? ' aria-current="page"' : '' %>>
+<% for (const [href, label, icon] of [...tabs, ...extra]) { %>
+        <a href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>>
           <svg class="icon" aria-hidden="true"><use href="#<%= icon %>"/></svg><span><%= label %></span>
 <% if (href === '/admin/bookings' && it.newBookings) { %><span class="badge" aria-label="новых: <%= it.newBookings %>"><%= it.newBookings %></span><% } %>
         </a>
@@ -44,12 +53,50 @@
           <button class="admin-link" type="submit">Выйти</button>
         </form>
       </div>
-    </header>
+    </aside>
 
     <main class="admin-main" id="main">
       <%~ it.body %>
     </main>
   </div>
+
+  <nav class="tabbar" aria-label="Разделы админки">
+<% for (const [href, label, icon] of tabs) { %>
+    <a class="tabbar__item" href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>>
+      <span class="tabbar__icon"><svg aria-hidden="true"><use href="#<%= icon %>"/></svg>
+<% if (href === '/admin/bookings' && it.newBookings) { %><span class="tabbar__badge" aria-label="новых: <%= it.newBookings %>"><%= it.newBookings %></span><% } %>
+      </span>
+      <span class="tabbar__label"><%= label %></span>
+    </a>
+<% } %>
+    <button type="button" class="tabbar__item" data-open-dialog="more-sheet"<%~ inExtra ? ' aria-current="page"' : '' %>>
+      <span class="tabbar__icon"><svg aria-hidden="true"><use href="#i-more"/></svg></span>
+      <span class="tabbar__label">Ещё</span>
+    </button>
+  </nav>
+
+  <dialog class="admin-dialog sheet-menu" id="more-sheet" aria-labelledby="more-title">
+    <div class="sheet">
+      <div class="sheet__head">
+        <h2 class="sheet__title" id="more-title">Ещё</h2>
+        <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="sheet__body">
+        <ul class="menu-list">
+<% for (const [href, label, icon] of extra) { %>
+          <li><a class="menu-item" href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>><span class="menu-item__icon"><svg aria-hidden="true"><use href="#<%= icon %>"/></svg></span><%= label %><svg class="menu-item__go" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
+<% } %>
+          <li><a class="menu-item" href="/" target="_blank" rel="noopener"><span class="menu-item__icon"><svg aria-hidden="true"><use href="#i-globe"/></svg></span>Открыть сайт<svg class="menu-item__go" aria-hidden="true"><use href="#i-arrow"/></svg></a></li>
+          <li>
+            <form method="post" action="/admin/logout">
+              <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+              <button class="menu-item menu-item--danger" type="submit"><span class="menu-item__icon"><svg aria-hidden="true"><use href="#i-logout"/></svg></span>Выйти</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
 
   <div class="toast" role="status" aria-live="polite" hidden></div>
 
