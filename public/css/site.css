@@ -25,7 +25,11 @@
 
 /* ============ База ============ */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 16px; }
+html {
+  -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 16px;
+  /* Без системной синей подсветки нажатия: у элементов свой отклик (:active, состояния выбора) */
+  -webkit-tap-highlight-color: transparent;
+}
 body {
   margin: 0;
   background: var(--page);
@@ -441,6 +445,10 @@ a.glass-tile:hover { background: var(--white); }
 .bstep__placeholder { color: var(--muted); }
 
 .service-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+/* Карточки и чипы выбора: при быстрых повторных нажатиях не выделяем текст */
+.option-card, .chip, .date-option, .time-option, .tab, .svc-card, .hero-service {
+  -webkit-user-select: none; user-select: none;
+}
 .option-card {
   position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px;
   padding: 12px 16px; border-radius: 16px; background: var(--white); cursor: pointer;
