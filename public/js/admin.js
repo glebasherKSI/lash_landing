@@ -25,6 +25,13 @@ const reloadWithFlash = (message) => {
   location.reload();
 };
 
+const redirectWithFlash = (url, message) => {
+  try {
+    sessionStorage.setItem(FLASH_KEY, message);
+  } catch {}
+  location.href = url;
+};
+
 try {
   const flash = sessionStorage.getItem(FLASH_KEY);
   if (flash) {
@@ -130,6 +137,7 @@ document.addEventListener('click', async (event) => {
   const result = await post(button.dataset.apiPost, button.dataset.body ? JSON.parse(button.dataset.body) : {});
   button.disabled = false;
   if (!result.ok) return toast(result.message, 'error');
+  if (result.redirect) return redirectWithFlash(result.redirect, result.message);
   if (button.hasAttribute('data-reload') || result.reload) return reloadWithFlash(result.message);
   if (button.hasAttribute('data-remove-row')) button.closest('[data-row]')?.remove();
   toast(result.message);
@@ -382,4 +390,11 @@ if (focusForm) {
     render();
   });
   render();
+}
+
+// Диалог, который нужно открыть сразу (например, настройка окна после смены фото первого экрана)
+const autoDialog = document.querySelector('dialog[data-autoopen]');
+if (autoDialog) {
+  autoDialog.showModal();
+  history.replaceState(null, '', location.pathname);
 }

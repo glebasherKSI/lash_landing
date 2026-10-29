@@ -19,7 +19,7 @@ const upload = multer({
   fileFilter: (_req, file, cb) => cb(null, ALLOWED_MIME.test(file.mimetype)),
 });
 
-worksRouter.get('/works', (_req, res) => {
+worksRouter.get('/works', (req, res) => {
   const works = listWorks();
   const heroWorkId = getSettings().hero_work_id;
   res.view('admin/works', {
@@ -27,6 +27,8 @@ worksRouter.get('/works', (_req, res) => {
     works,
     heroWorkId,
     heroWork: works.find((w) => w.id === heroWorkId) ?? null,
+    // сразу после выбора фото для первого экрана открываем настройку окна
+    openFocus: req.query.focus === '1',
     // для превью «окна-глаза» (тот же partial, что на сайте)
     heroLashes: lashStrokes(listEffects({ activeOnly: true })[0]?.profile ?? [8, 9, 10, 11, 11]),
     almondPath: ALMOND_PATH,
@@ -91,7 +93,8 @@ worksRouter.post(
     const work = getWork(idParam(req));
     if (!work) throw notFound('Фото');
     saveSettings({ hero_work_id: work.id });
-  }, { message: 'Фото стоит на первом экране' }),
+    return { redirect: '/admin/works?focus=1' };
+  }, { message: 'Фото на первом экране. Отметьте точку между глаз' }),
 );
 
 worksRouter.post(

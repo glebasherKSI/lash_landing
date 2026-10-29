@@ -17,8 +17,8 @@ export const getWork = (id) => {
 export const createWork = ({ file_key, width, height, caption }) =>
   db
     .prepare(
-      `INSERT INTO works (file_key, width, height, caption, sort)
-       VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM works))`,
+      `INSERT INTO works (file_key, width, height, caption, sort, focus_y)
+       VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM works), 40)`,
     )
     .run(file_key, width, height, caption).lastInsertRowid;
 

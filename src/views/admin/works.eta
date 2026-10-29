@@ -53,7 +53,7 @@
 </section>
 
 <% if (it.heroWork) { const w = it.heroWork; %>
-<dialog class="admin-dialog admin-dialog--wide" id="focus-dialog" aria-labelledby="focus-title">
+<dialog class="admin-dialog admin-dialog--wide" id="focus-dialog" aria-labelledby="focus-title"<%~ it.openFocus ? ' data-autoopen' : '' %>>
   <form class="admin-form" data-api action="/admin/api/works/<%= w.id %>/focus" data-focus-form>
     <div class="admin-dialog__head">
       <h2 class="h3" id="focus-title">Окно на первом экране</h2>
