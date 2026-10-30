@@ -279,6 +279,8 @@ export const initBooking = ({ services = [], effects = [] }) => {
     success.querySelector('[data-success-text]').textContent =
       `${booking.service}${booking.effect ? `, ${booking.effect.toLowerCase()} эффект` : ''}: ${booking.date}, ${booking.time}. Стоимость ${booking.price} BYN.`;
     animateSuccess(form, success);
+    // цель в Яндекс Метрике (если счётчик подключён в админке)
+    if (window.ym && window.__metrikaId) window.ym(window.__metrikaId, 'reachGoal', 'booking');
     success.focus({ preventScroll: true });
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };

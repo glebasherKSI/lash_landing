@@ -104,6 +104,78 @@
   </div>
 </form>
 
+<section class="integrations" aria-labelledby="integrations-title">
+  <div class="section-bar"><h2 class="h3" id="integrations-title">Уведомления и аналитика</h2></div>
+  <div class="acc-list">
+    <details class="panel acc"<%~ !s.telegram_enabled ? ' open' : '' %>>
+      <summary class="acc__head">
+        <span class="acc__title">Telegram <span class="tag<%= s.telegram_enabled ? ' tag--accent' : '' %>" data-tg-state><%= s.telegram_enabled ? 'включено' : 'выключено' %></span></span>
+        <span class="acc__meta"><%= s.telegram_enabled ? 'Записи с сайта приходят в «' + (s.telegram_chat_title || s.telegram_chat_id) + '»' : 'Уведомления о новых записях в группу' %></span>
+        <svg class="acc__chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </summary>
+      <form class="admin-form acc__body" data-api action="/admin/api/integrations/telegram" data-telegram-form>
+        <ol class="steps-hint">
+          <li>В Telegram откройте <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, отправьте <b>/newbot</b> и скопируйте токен.</li>
+          <li>Добавьте бота в группу, куда должны приходить записи, и напишите там любое сообщение.</li>
+          <li>Вставьте токен ниже, нажмите «Найти группы» и выберите группу.</li>
+        </ol>
+        <div class="field">
+          <label for="tg-token">Токен бота</label>
+          <input id="tg-token" name="telegram_bot_token" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="<%= it.tokenMask ? 'сохранён ' + it.tokenMask + ' — вставьте новый, чтобы заменить' : '123456789:AAH…' %>" data-tg-token>
+          <p class="field-error" data-error-for="telegram_bot_token"></p>
+        </div>
+        <div class="field">
+          <label for="tg-chat">Группа</label>
+          <div class="input-action">
+            <input id="tg-chat" name="telegram_chat_id" value="<%= s.telegram_chat_id %>" inputmode="numeric" placeholder="-100…" autocomplete="off" data-tg-chat>
+            <button type="button" class="btn btn--ghost" data-tg-find>Найти группы</button>
+          </div>
+          <input type="hidden" name="telegram_chat_title" value="<%= s.telegram_chat_title %>" data-tg-title>
+          <p class="field-hint" data-tg-title-hint><%= s.telegram_chat_title ? 'Выбрана группа «' + s.telegram_chat_title + '»' : '' %></p>
+          <p class="field-error" data-error-for="telegram_chat_id"></p>
+          <ul class="chat-picks" data-tg-chats hidden></ul>
+        </div>
+        <label class="check-row"><span>Отправлять уведомления о новых записях</span><span class="switch"><input type="checkbox" name="telegram_enabled"<%~ s.telegram_enabled ? ' checked' : '' %>></span></label>
+        <p class="form-error" data-form-error role="alert"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn--ghost" data-tg-test>Отправить тест</button>
+          <button class="btn btn--dark" type="submit">Сохранить</button>
+        </div>
+      </form>
+    </details>
+
+    <details class="panel acc"<%~ !s.metrika_id ? ' open' : '' %>>
+      <summary class="acc__head">
+        <span class="acc__title">Яндекс Метрика <span class="tag<%= s.metrika_id ? ' tag--accent' : '' %>"><%= s.metrika_id ? 'подключена' : 'не подключена' %></span></span>
+        <span class="acc__meta"><%= s.metrika_id ? 'Счётчик ' + s.metrika_id : 'Статистика посещений сайта' %></span>
+        <svg class="acc__chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </summary>
+      <form class="admin-form acc__body" data-api action="/admin/api/integrations/metrika" data-reload>
+        <ol class="steps-hint">
+          <li>Создайте счётчик на <a href="https://metrika.yandex.ru/add" target="_blank" rel="noopener">metrika.yandex.ru</a>, адрес сайта: <b><%= it.siteHost %></b>.</li>
+          <li>Скопируйте номер счётчика (цифры над названием) и вставьте ниже.</li>
+          <li>Чтобы видеть, сколько людей записались, добавьте в Метрике цель «JavaScript-событие» с идентификатором <b>booking</b>.</li>
+        </ol>
+        <div class="field">
+          <label for="ym-id">Номер счётчика</label>
+          <input id="ym-id" name="metrika_id" value="<%= s.metrika_id %>" inputmode="numeric" placeholder="98765432" autocomplete="off">
+          <p class="field-hint">Оставьте пустым, чтобы отключить Метрику.</p>
+          <p class="field-error" data-error-for="metrika_id"></p>
+        </div>
+        <label class="check-row"><span>Вебвизор (запись действий посетителей)</span><span class="switch"><input type="checkbox" name="metrika_webvisor"<%~ s.metrika_webvisor ? ' checked' : '' %>></span></label>
+        <p class="form-error" data-form-error role="alert"></p>
+        <div class="form-actions">
+<% if (s.metrika_id) { %>
+          <a class="btn btn--ghost" href="https://metrika.yandex.ru/dashboard?id=<%= s.metrika_id %>" target="_blank" rel="noopener">Открыть отчёты <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+<% } %>
+          <button class="btn btn--dark" type="submit">Сохранить</button>
+        </div>
+      </form>
+    </details>
+  </div>
+</section>
+
 <section class="reviews-admin" aria-labelledby="reviews-title">
   <div class="section-bar">
     <h2 class="h3" id="reviews-title">Отзывы · <%= it.reviews.length %></h2>

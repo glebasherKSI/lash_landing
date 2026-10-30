@@ -8,6 +8,7 @@ import { ROOT, config } from './config.js';
 import { cookieMiddleware } from './lib/cookies.js';
 import { csrfToken } from './lib/csrf.js';
 import { ASSET_PREFIX, asset } from './lib/assets.js';
+import { getSettings } from './db/repos/settings.js';
 import { apiRouter } from './routes/api.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
@@ -27,16 +28,29 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Домены Яндекс Метрики (по документации Метрики: счётчик, пиксели, вебвизор)
+const METRIKA_HOSTS = {
+  script: ['https://mc.yandex.ru', 'https://mc.yandex.com', 'https://yastatic.net'],
+  img: ['https://mc.yandex.ru', 'https://mc.yandex.by', 'https://mc.yandex.com'],
+  connect: ['https://mc.yandex.ru', 'https://mc.yandex.by', 'https://mc.yandex.com', 'wss://mc.yandex.ru', 'wss://mc.yandex.com'],
+  frame: ['blob:', 'https://mc.yandex.ru', 'https://mc.yandex.com'],
+};
+const metrikaOn = (res) => (res.locals.metrikaOn ??= Boolean(getSettings().metrika_id));
+// Для CSP-директивы: хосты Метрики, если она включена; иначе безобидный повтор 'self'
+const metrika = (kind) => (_req, res) => (metrikaOn(res) ? METRIKA_HOSTS[kind].join(' ') : "'self'");
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", metrika('script')],
         styleSrc: ["'self'", 'https://fonts.googleapis.com', (_req, res) => `'nonce-${res.locals.cspNonce}'`],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:'],
-        connectSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'blob:', metrika('img')],
+        connectSrc: ["'self'", metrika('connect')],
+        frameSrc: ["'self'", metrika('frame')],
+        childSrc: ["'self'", metrika('frame')],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
         upgradeInsecureRequests: config.isProd ? [] : null,

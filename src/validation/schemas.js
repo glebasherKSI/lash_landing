@@ -194,3 +194,40 @@ export const fieldErrors = (error) => {
   }
   return errors;
 };
+
+/* ---------- Интеграции ---------- */
+
+const TELEGRAM_TOKEN_RE = /^\d{5,12}:[A-Za-z0-9_-]{30,50}$/;
+// ID группы отрицательный (-100… у супергрупп); для канала можно @username
+const TELEGRAM_CHAT_RE = /^(-?\d{5,20}|@[A-Za-z][A-Za-z0-9_]{4,31})$/;
+
+const telegramToken = z
+  .string()
+  .trim()
+  .refine((v) => v === '' || TELEGRAM_TOKEN_RE.test(v), 'Токен выглядит как 123456789:AAH… — скопируйте его у @BotFather целиком');
+
+const telegramChat = z
+  .string()
+  .trim()
+  .refine((v) => v === '' || TELEGRAM_CHAT_RE.test(v), 'ID группы — число, обычно начинается с -100. Нажмите «Найти группы»');
+
+// Пустой токен значит «оставить сохранённый»
+export const telegramSettingsSchema = z.object({
+  telegram_enabled: checkbox,
+  telegram_bot_token: telegramToken.default(''),
+  telegram_chat_id: telegramChat.default(''),
+  telegram_chat_title: trimmed(120).default(''),
+});
+
+export const telegramTestSchema = z.object({
+  telegram_bot_token: telegramToken.default(''),
+  telegram_chat_id: telegramChat.default(''),
+});
+
+export const metrikaSettingsSchema = z.object({
+  metrika_id: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || /^\d{5,12}$/.test(v), 'Номер счётчика — только цифры, например 98765432'),
+  metrika_webvisor: checkbox,
+});

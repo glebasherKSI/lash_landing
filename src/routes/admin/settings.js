@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { createReview, deleteReview, listReviews, reorderReviews, updateReview } from '../../db/repos/catalog.js';
-import { getSettings, saveSettings } from '../../db/repos/settings.js';
+import { getSecret, getSettings, saveSettings } from '../../db/repos/settings.js';
+import { maskToken } from './integrations.js';
+import { config } from '../../config.js';
 import { mapUrl } from '../../lib/format.js';
 import { idListSchema, reviewSchema, settingsSchema } from '../../validation/schemas.js';
 import { action, idParam, notFound } from './helpers.js';
@@ -28,6 +30,8 @@ settingsRouter.get('/settings', (_req, res) => {
     title: 'Настройки сайта',
     s: settings,
     mapUrl: mapUrl(settings),
+    tokenMask: maskToken(getSecret('telegram_bot_token')),
+    siteHost: new URL(config.SITE_URL).host,
     whyItems: pad(settings.why_items, 4),
     visitSteps: pad(settings.visit_steps, 3),
     rules: pad(settings.rules, 4),

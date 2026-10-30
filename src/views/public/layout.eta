@@ -30,11 +30,17 @@
 <% if (it.preloadImage) { %>
   <link rel="preload" as="image" href="<%= it.preloadImage.href %>" imagesrcset="<%= it.preloadImage.srcset %>" imagesizes="<%= it.preloadImage.sizes %>" fetchpriority="high">
 <% } %>
+<% if (it.settings?.metrika_id) { %>
+  <script src="<%= it.asset('/js/metrika.js') %>" data-id="<%= it.settings.metrika_id %>" data-webvisor="<%= it.settings.metrika_webvisor ? 1 : 0 %>" async></script>
+<% } %>
 <% if (it.jsonLd) { %>
   <script type="application/ld+json"><%~ JSON.stringify(it.jsonLd).replace(/</g, '\\u003c') %></script>
 <% } %>
 </head>
 <body>
+<% if (it.settings?.metrika_id) { %>
+  <noscript><div><img class="sr-only" src="https://mc.yandex.ru/watch/<%= it.settings.metrika_id %>" alt=""></div></noscript>
+<% } %>
   <a class="skip-link" href="#main">К содержанию</a>
   <%~ include('../partials/icons') %>
   <%~ it.body %>

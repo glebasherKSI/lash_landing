@@ -508,3 +508,85 @@ if (workSheet) {
     }),
   );
 }
+
+/* ---------- Telegram: поиск групп, тест, статус ---------- */
+
+const telegramForm = document.querySelector('[data-telegram-form]');
+if (telegramForm) {
+  const tokenInput = telegramForm.querySelector('[data-tg-token]');
+  const chatInput = telegramForm.querySelector('[data-tg-chat]');
+  const titleInput = telegramForm.querySelector('[data-tg-title]');
+  const titleHint = telegramForm.querySelector('[data-tg-title-hint]');
+  const chatList = telegramForm.querySelector('[data-tg-chats]');
+  const findButton = telegramForm.querySelector('[data-tg-find]');
+  const testButton = telegramForm.querySelector('[data-tg-test]');
+  const stateTag = telegramForm.closest('details').querySelector('[data-tg-state]');
+
+  const credentials = () => ({ telegram_bot_token: tokenInput.value.trim(), telegram_chat_id: chatInput.value.trim() });
+
+  // Запрос с кнопки: блокируем её на время и показываем ошибки у полей
+  const run = async (button, url, body) => {
+    clearFormErrors(telegramForm);
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Подождите…';
+    try {
+      const result = await post(url, body);
+      if (!result.ok) {
+        showFormErrors(telegramForm, result.errors);
+        telegramForm.querySelector('[data-form-error]').textContent = result.message;
+        toast(result.message, 'error');
+        return null;
+      }
+      return result;
+    } finally {
+      button.disabled = false;
+      button.textContent = label;
+    }
+  };
+
+  // Ручной ввод ID: название группы больше не соответствует
+  chatInput.addEventListener('input', () => {
+    titleInput.value = '';
+    titleHint.textContent = '';
+  });
+
+  findButton.addEventListener('click', async () => {
+    const result = await run(findButton, '/admin/api/integrations/telegram/chats', credentials());
+    if (!result) return;
+    toast(result.message);
+    chatList.replaceChildren(
+      ...result.chats.map((chat) => {
+        const li = document.createElement('li');
+        const pick = document.createElement('button');
+        pick.type = 'button';
+        pick.className = 'chat-pick';
+        pick.innerHTML = '<span class="chat-pick__title"></span><span class="chat-pick__id"></span>';
+        pick.querySelector('.chat-pick__title').textContent = chat.title;
+        pick.querySelector('.chat-pick__id').textContent = chat.id;
+        pick.addEventListener('click', () => {
+          chatInput.value = chat.id;
+          titleInput.value = chat.title;
+          titleHint.textContent = `Выбрана группа «${chat.title}». Нажмите «Сохранить».`;
+          chatList.hidden = true;
+        });
+        li.append(pick);
+        return li;
+      }),
+    );
+    chatList.hidden = !result.chats.length;
+  });
+
+  testButton.addEventListener('click', async () => {
+    const result = await run(testButton, '/admin/api/integrations/telegram/test', credentials());
+    if (result) toast(result.message);
+  });
+
+  telegramForm.addEventListener('api:success', ({ detail }) => {
+    const enabled = telegramForm.elements.telegram_enabled.checked;
+    if (detail.tokenMask) tokenInput.placeholder = `сохранён ${detail.tokenMask} — вставьте новый, чтобы заменить`;
+    tokenInput.value = '';
+    stateTag.textContent = enabled ? 'включено' : 'выключено';
+    stateTag.classList.toggle('tag--accent', enabled);
+  });
+}

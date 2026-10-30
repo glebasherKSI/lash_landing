@@ -12,6 +12,7 @@ import { bookingsRouter } from './bookings.js';
 import { scheduleRouter } from './schedule.js';
 import { settingsRouter } from './settings.js';
 import { effectsRouter } from './effects.js';
+import { integrationsRouter } from './integrations.js';
 
 export const adminRouter = Router();
 
@@ -72,3 +73,4 @@ adminRouter.use(worksRouter);
 adminRouter.use(scheduleRouter);
 adminRouter.use(settingsRouter);
 adminRouter.use(effectsRouter);
+adminRouter.use(integrationsRouter);
