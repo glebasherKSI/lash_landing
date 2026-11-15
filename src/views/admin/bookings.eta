@@ -10,8 +10,9 @@
   </button>
 </header>
 
-<nav class="filters" aria-label="Фильтр записей">
-  <div class="segmented segmented--full" role="group" aria-label="Период">
+<nav class="filters" aria-label="Фильтр записей" data-bookings-filters>
+  <div class="segmented segmented--full" role="group" aria-label="Период" data-segmented>
+    <span class="segmented__thumb" aria-hidden="true"></span>
 <% for (const p of it.periods) { %>
     <a class="segmented__item" href="?period=<%= p.value %><%= it.status ? '&status=' + it.status : '' %>"<%~ p.value === it.period ? ' aria-current="true"' : '' %>><%= p.label %></a>
 <% } %>
@@ -26,6 +27,7 @@
   </div>
 </nav>
 
+<div class="bookings-list" data-bookings-list>
 <% if (!it.groups.length) { %>
 <div class="panel empty-state">
   <span class="empty-state__icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
@@ -69,69 +71,100 @@
 </section>
 <% } %>
 
-<dialog class="admin-dialog" id="booking-dialog" aria-labelledby="booking-dialog-title">
-  <form class="sheet admin-form" data-api action="/admin/api/bookings" data-reset>
+</div>
+
+<dialog class="admin-dialog quick" id="booking-dialog" aria-labelledby="booking-dialog-title">
+  <form class="sheet admin-form" data-api action="/admin/api/bookings" data-quick-form>
     <div class="sheet__head">
       <h2 class="sheet__title" id="booking-dialog-title">Новая запись</h2>
       <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
     </div>
     <div class="sheet__body">
-      <div class="form-grid">
-        <div class="field field--wide">
-          <label for="b-service">Услуга</label>
-          <select id="b-service" name="service_id" class="select" required>
-            <option value="">Выберите услугу</option>
-<% for (const s of it.services) { %>
-            <option value="<%= s.id %>"><%= s.title %> · <%= s.price_byn %> BYN · <%= s.duration_min %> мин<%= s.is_active ? '' : ' (скрыта)' %></option>
+      <fieldset class="quick__step">
+        <legend class="quick__label">Услуга</legend>
+        <div class="quick-services">
+<% for (const s of it.services.filter((s) => s.is_active)) { %>
+          <label class="quick-option">
+            <input type="radio" name="service_id" value="<%= s.id %>" data-duration="<%= s.duration_min %>" data-title="<%= s.title %>" required>
+            <span class="quick-option__title"><%= s.title %></span>
+            <span class="quick-option__meta"><%= s.price_byn %> BYN · <%= it.formatDuration(s.duration_min) %></span>
+          </label>
 <% } %>
-          </select>
-          <p class="field-error" data-error-for="service_id"></p>
         </div>
-        <div class="field">
-          <label for="b-date">Дата</label>
-          <input id="b-date" name="date" type="date" required value="<%= it.today %>">
-          <p class="field-error" data-error-for="date"></p>
+        <p class="field-error" data-error-for="service_id"></p>
+      </fieldset>
+
+      <fieldset class="quick__step" data-quick-step="date" disabled>
+        <legend class="quick__label">Дата</legend>
+        <div class="quick-dates" data-quick-dates><p class="muted">Сначала выберите услугу</p></div>
+        <p class="field-error" data-error-for="date"></p>
+      </fieldset>
+
+      <fieldset class="quick__step" data-quick-step="time" disabled>
+        <legend class="quick__label">Время</legend>
+        <div class="quick-times" data-quick-times><p class="muted">Выберите дату</p></div>
+        <details class="quick-custom" data-quick-custom>
+          <summary>Другое время</summary>
+          <div class="quick-custom__body">
+            <label class="time-field"><span class="time-field__label">в</span><input type="time" step="300" data-quick-custom-time aria-label="Время начала"></label>
+            <p class="field-hint">Для времени вне сетки или поверх другой записи: запись сохранится, даже если время занято.</p>
+          </div>
+        </details>
+        <input type="hidden" name="time">
+        <input type="hidden" name="date">
+        <input type="hidden" name="force">
+        <p class="field-error" data-error-for="time"></p>
+      </fieldset>
+
+      <fieldset class="quick__step">
+        <legend class="quick__label">Клиентка</legend>
+        <div class="quick-client-actions">
+          <button type="button" class="btn btn--ghost btn--sm" data-quick-contacts hidden><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Из контактов</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-quick-paste hidden>Вставить из переписки</button>
         </div>
-        <div class="field">
-          <label for="b-time">Время начала</label>
-          <input id="b-time" name="time" type="time" required step="300">
-          <p class="field-error" data-error-for="time"></p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="b-name">Имя</label>
+            <input id="b-name" name="client_name" required maxlength="60" autocomplete="off" autocapitalize="words" enterkeyhint="next">
+            <p class="field-error" data-error-for="client_name"></p>
+          </div>
+          <div class="field">
+            <label for="b-contact">Телефон или Telegram</label>
+            <input id="b-contact" name="contact" required maxlength="40" type="tel" inputmode="tel" autocomplete="off" enterkeyhint="done">
+            <p class="field-error" data-error-for="contact"></p>
+          </div>
         </div>
-        <div class="field">
-          <label for="b-name">Имя клиента</label>
-          <input id="b-name" name="client_name" required maxlength="60" autocomplete="off">
-          <p class="field-error" data-error-for="client_name"></p>
-        </div>
-        <div class="field">
-          <label for="b-contact">Телефон или Telegram</label>
-          <input id="b-contact" name="contact" required maxlength="40" inputmode="tel" autocomplete="off">
-          <p class="field-error" data-error-for="contact"></p>
-        </div>
-        <div class="field">
-          <label for="b-effect">Эффект</label>
-          <select id="b-effect" name="effect_slug" class="select">
-            <option value="">Не выбран</option>
+        <p class="field-hint">Можно вставить «Аня +375 29 123-45-67» в любое поле — имя и телефон разложатся сами.</p>
+      </fieldset>
+
+      <details class="quick-more">
+        <summary>Эффект, комментарий, статус</summary>
+        <div class="form-grid quick-more__body">
+          <div class="field">
+            <label for="b-effect">Эффект</label>
+            <select id="b-effect" name="effect_slug" class="select">
+              <option value="">Не выбран</option>
 <% for (const e of it.effects) { %><option value="<%= e.slug %>"><%= e.name %></option><% } %>
-          </select>
+            </select>
+          </div>
+          <div class="field">
+            <label for="b-status">Статус</label>
+            <select id="b-status" name="status" class="select">
+              <option value="confirmed">Подтверждена</option>
+              <option value="new">Новая</option>
+            </select>
+          </div>
+          <div class="field field--wide">
+            <label for="b-comment">Комментарий</label>
+            <textarea id="b-comment" name="comment" rows="2" maxlength="500"></textarea>
+          </div>
         </div>
-        <div class="field">
-          <label for="b-status">Статус</label>
-          <select id="b-status" name="status" class="select">
-            <option value="confirmed">Подтверждена</option>
-            <option value="new">Новая</option>
-          </select>
-        </div>
-        <div class="field field--wide">
-          <label for="b-comment">Комментарий</label>
-          <textarea id="b-comment" name="comment" rows="2" maxlength="500"></textarea>
-        </div>
-        <label class="check field--wide"><input type="checkbox" name="force"> Записать, даже если время занято или вне рабочих часов</label>
-      </div>
+      </details>
       <p class="form-error" data-form-error role="alert"></p>
     </div>
-    <div class="sheet__foot">
-      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
-      <button type="submit" class="btn btn--dark">Добавить запись</button>
+    <div class="sheet__foot quick__foot">
+      <p class="quick__summary" data-quick-summary>Выберите услугу и время</p>
+      <button type="submit" class="btn btn--dark" data-quick-submit disabled>Записать</button>
     </div>
   </form>
 </dialog>

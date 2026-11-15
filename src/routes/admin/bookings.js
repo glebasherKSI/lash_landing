@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { BOOKING_STATUSES, countBookingsByStatus, getBooking, listBookings, setBookingStatus } from '../../db/repos/bookings.js';
-import { listEffects, listServices } from '../../db/repos/catalog.js';
-import { BookingError, createBooking } from '../../lib/booking.js';
-import { addDays, formatDateLong, formatTime, formatTimestampLocal, todayISO } from '../../lib/time.js';
+import { getService, listEffects, listServices } from '../../db/repos/catalog.js';
+import { getDayHours } from '../../db/repos/schedule.js';
+import { getSettings } from '../../db/repos/settings.js';
+import { BookingError, createBooking, getDaySlots } from '../../lib/booking.js';
+import { addDays, describeDate, formatDateLong, formatTime, formatTimestampLocal, isValidISODate, todayISO } from '../../lib/time.js';
 import { adminBookingSchema, bookingStatusSchema } from '../../validation/schemas.js';
+import { formatDuration } from '../../lib/format.js';
 import { action, idParam, notFound } from './helpers.js';
 
 export const bookingsRouter = Router();
@@ -54,8 +57,39 @@ bookingsRouter.get('/bookings', (req, res) => {
     total: bookings.length,
     services: listServices(),
     effects: listEffects(),
+    formatDuration,
     today,
   });
+});
+
+// Быстрая запись в админке: дальше горизонта онлайн-записи и для скрытых услуг тоже
+const ADMIN_DAYS_AHEAD = 30;
+
+bookingsRouter.get('/api/slots', (req, res) => {
+  const service = getService(Number(req.query.service_id));
+  if (!service) return res.status(404).json({ ok: false, message: 'Услуга не найдена' });
+  const stepMin = getSettings().slot_step_min;
+  const date = String(req.query.date ?? '');
+
+  if (!date) {
+    const today = todayISO();
+    const days = Array.from({ length: ADMIN_DAYS_AHEAD }, (_, i) => {
+      const iso = addDays(today, i);
+      const working = Boolean(getDayHours(iso));
+      const free = working ? getDaySlots({ date: iso, durationMin: service.duration_min, stepMin }).filter((s) => s.available).length : 0;
+      return { ...describeDate(iso), working, free, offset: i };
+    });
+    return res.json({ ok: true, days });
+  }
+
+  if (!isValidISODate(date)) return res.status(400).json({ ok: false, message: 'Некорректная дата' });
+  const slots = getDaySlots({ date, durationMin: service.duration_min, stepMin }).map((s) => ({
+    time: formatTime(s.start),
+    end: formatTime(s.end),
+    available: s.available,
+    reason: s.reason,
+  }));
+  res.json({ ok: true, working: Boolean(getDayHours(date)), slots });
 });
 
 bookingsRouter.post(

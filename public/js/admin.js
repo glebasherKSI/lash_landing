@@ -1,5 +1,6 @@
 import { buildLashLines } from './lash-geometry.js';
 import { mountHeroWindow } from './modules/hero-window.js';
+import { parseContact } from './modules/contact-parse.js';
 
 const csrf = document.body.dataset.csrf;
 const toastEl = document.querySelector('.toast');
@@ -648,3 +649,236 @@ document.addEventListener('visibilitychange', () => {
   const away = hiddenAt && Date.now() - hiddenAt > 60_000;
   if (away && location.pathname === '/admin/bookings' && !document.querySelector('dialog[open]')) location.reload();
 });
+
+/* ---------- Записи: вкладки без перезагрузки ---------- */
+
+const bookingFilters = document.querySelector('[data-bookings-filters]');
+if (bookingFilters) {
+  const list = document.querySelector('[data-bookings-list]');
+  const segmented = bookingFilters.querySelector('[data-segmented]');
+  const thumb = segmented.querySelector('.segmented__thumb');
+  let controller = null;
+
+  // Подложка под выбранным периодом переезжает к нажатой вкладке
+  const moveThumb = () => {
+    const active = segmented.querySelector('[aria-current="true"]');
+    if (!active) return;
+    thumb.style.width = `${active.offsetWidth}px`;
+    thumb.style.transform = `translateX(${active.offsetLeft - 4}px)`;
+  };
+  moveThumb();
+  segmented.classList.add('has-thumb');
+  window.addEventListener('resize', moveThumb);
+
+  const setCurrent = (group, link) => group.querySelectorAll('a').forEach((a) => a.setAttribute('aria-current', String(a === link)));
+
+  bookingFilters.addEventListener('click', async (event) => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.metaKey || event.ctrlKey) return;
+    event.preventDefault();
+    if (link.getAttribute('aria-current') === 'true') return;
+
+    setCurrent(link.parentElement, link);
+    moveThumb();
+    link.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    list.classList.add('is-leaving');
+
+    controller?.abort();
+    controller = new AbortController();
+    try {
+      const [html] = await Promise.all([
+        fetch(link.href, { signal: controller.signal }).then((r) => r.text()),
+        new Promise((r) => setTimeout(r, 140)), // дать старому списку плавно уйти
+      ]);
+      const next = new DOMParser().parseFromString(html, 'text/html');
+      list.innerHTML = next.querySelector('[data-bookings-list]').innerHTML;
+      // ссылки вкладок зависят друг от друга (период ↔ статус) — берём свежие адреса и счётчики
+      const fresh = next.querySelectorAll('[data-bookings-filters] a');
+      bookingFilters.querySelectorAll('a').forEach((a, i) => {
+        if (!fresh[i]) return;
+        a.href = fresh[i].getAttribute('href');
+        a.innerHTML = fresh[i].innerHTML;
+      });
+      history.replaceState(null, '', link.href);
+      list.classList.remove('is-leaving');
+    } catch (error) {
+      if (error.name !== 'AbortError') location.href = link.href;
+    }
+  });
+}
+
+/* ---------- Быстрая запись: услуга → дата → время → клиентка ---------- */
+
+const quickForm = document.querySelector('[data-quick-form]');
+if (quickForm) {
+  const dialog = quickForm.closest('dialog');
+  const dateStep = quickForm.querySelector('[data-quick-step="date"]');
+  const timeStep = quickForm.querySelector('[data-quick-step="time"]');
+  const datesBox = quickForm.querySelector('[data-quick-dates]');
+  const timesBox = quickForm.querySelector('[data-quick-times]');
+  const custom = quickForm.querySelector('[data-quick-custom]');
+  const customTime = quickForm.querySelector('[data-quick-custom-time]');
+  const summary = quickForm.querySelector('[data-quick-summary]');
+  const submit = quickForm.querySelector('[data-quick-submit]');
+  const nameInput = quickForm.elements.client_name;
+  const contactInput = quickForm.elements.contact;
+  const DAY_NAMES = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  let state = {};
+  let request = 0;
+
+  const placeholder = (box, text) => {
+    box.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = text;
+    box.append(p);
+  };
+
+  const sync = () => {
+    quickForm.elements.date.value = state.date ?? '';
+    quickForm.elements.time.value = state.time ?? '';
+    quickForm.elements.force.value = state.force ? 'on' : '';
+    const ready = state.serviceId && state.date && state.time;
+    submit.disabled = !ready;
+    if (ready) summary.textContent = `${state.title} · ${state.dateLabel}, ${state.time}${state.force ? ' (вне сетки)' : `–${state.end}`}`;
+    else if (state.serviceId) summary.textContent = `${state.title} · выберите ${state.date ? 'время' : 'дату'}`;
+    else summary.textContent = 'Выберите услугу и время';
+  };
+
+  // Кнопка-переключатель (radio) для лент даты и времени; текст только из наших данных
+  const option = (name, value, html, { disabled = false, checked = false, className = '' } = {}) => {
+    const label = document.createElement('label');
+    label.className = `quick-chip ${className}`;
+    label.innerHTML = `<input type="radio" name="${name}" value="${value}"${disabled ? ' disabled' : ''}${checked ? ' checked' : ''}><span>${html}</span>`;
+    return label;
+  };
+
+  const loadTimes = async () => {
+    const id = ++request;
+    timeStep.disabled = false;
+    placeholder(timesBox, 'Загружаю время…');
+    const res = await fetch(`/admin/api/slots?service_id=${state.serviceId}&date=${state.date}`).then((r) => r.json());
+    if (id !== request) return;
+    if (!res.working) return placeholder(timesBox, 'Выходной. Если нужно, откройте «Другое время».');
+    if (!res.slots.some((s) => s.available)) return placeholder(timesBox, 'Свободного времени нет. Можно выбрать «Другое время».');
+    timesBox.innerHTML = '';
+    for (const slot of res.slots) {
+      const chip = option('slot', slot.time, slot.time, { disabled: !slot.available, className: slot.available ? '' : 'is-busy' });
+      chip.dataset.end = slot.end;
+      timesBox.append(chip);
+    }
+  };
+
+  const loadDays = async () => {
+    const id = ++request;
+    dateStep.disabled = false;
+    placeholder(datesBox, 'Загружаю даты…');
+    const res = await fetch(`/admin/api/slots?service_id=${state.serviceId}`).then((r) => r.json());
+    if (id !== request) return;
+    datesBox.innerHTML = '';
+    // ближайшая дата со свободным окном выбирается сама — на одно касание меньше
+    const keep = res.days.find((d) => d.iso === state.date && d.free);
+    const pick = keep ?? res.days.find((d) => d.free) ?? res.days[0];
+    let picked = null;
+    for (const day of res.days) {
+      const top = day.offset === 0 ? 'сегодня' : day.offset === 1 ? 'завтра' : DAY_NAMES[new Date(`${day.iso}T12:00`).getDay()];
+      const bottom = !day.working ? 'выходной' : day.free ? `${day.free} окон` : 'занято';
+      const chip = option('date_pick', day.iso, `<small>${top}</small><b>${day.day}</b><small>${bottom}</small>`, {
+        checked: day === pick,
+        className: !day.working ? 'is-off' : day.free ? '' : 'is-full',
+      });
+      chip.dataset.label = day.offset < 2 ? top : `${top}, ${day.label}`;
+      if (day === pick) picked = chip;
+      datesBox.append(chip);
+    }
+    state = { ...state, date: pick.iso, dateLabel: picked.dataset.label, time: null, force: false };
+    picked.scrollIntoView({ inline: 'center', block: 'nearest' });
+    sync();
+    loadTimes();
+    // показать сразу дату и сетку времени: следующий шаг без прокрутки руками
+    dateStep.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+
+  quickForm.addEventListener('change', (event) => {
+    const input = event.target;
+    if (input.name === 'service_id') {
+      state = { ...state, serviceId: input.value, title: input.dataset.title, time: null, force: false };
+      sync();
+      loadDays();
+    } else if (input.name === 'date_pick') {
+      state = { ...state, date: input.value, dateLabel: input.closest('label').dataset.label, time: null, force: false };
+      sync();
+      loadTimes();
+    } else if (input.name === 'slot') {
+      state = { ...state, time: input.value, end: input.closest('label').dataset.end, force: false };
+      custom.open = false;
+      customTime.value = '';
+      haptic();
+      sync();
+      // дальше нужно имя: фокус сразу открывает клавиатуру
+      if (!nameInput.value) nameInput.focus();
+    }
+  });
+
+  customTime.addEventListener('input', () => {
+    if (!customTime.value) return;
+    timesBox.querySelectorAll('input:checked').forEach((i) => (i.checked = false));
+    state = { ...state, time: customTime.value, force: true };
+    sync();
+  });
+
+  const fillContact = ({ name, contact }) => {
+    if (name) nameInput.value = name;
+    if (contact) contactInput.value = contact;
+    haptic();
+  };
+
+  // Вставка «Аня +375 29 …» в любое из двух полей раскладывает имя и телефон
+  [nameInput, contactInput].forEach((input) =>
+    input.addEventListener('paste', (event) => {
+      const parsed = parseContact(event.clipboardData?.getData('text'));
+      if (!parsed.name || !parsed.contact) return;
+      event.preventDefault();
+      fillContact(parsed);
+    }),
+  );
+
+  const pasteButton = quickForm.querySelector('[data-quick-paste]');
+  if (navigator.clipboard?.readText) {
+    pasteButton.hidden = false;
+    pasteButton.addEventListener('click', async () => {
+      try {
+        const parsed = parseContact(await navigator.clipboard.readText());
+        if (!parsed.name && !parsed.contact) return toast('В буфере нет имени или телефона', 'error');
+        fillContact(parsed);
+      } catch {
+        toast('Нет доступа к буферу. Вставьте текст в поле вручную', 'error');
+      }
+    });
+  }
+
+  // Выбор из записной книжки — Chrome на Android (на iPhone браузер такого не умеет)
+  const contactsButton = quickForm.querySelector('[data-quick-contacts]');
+  if ('contacts' in navigator && 'ContactsManager' in window) {
+    contactsButton.hidden = false;
+    contactsButton.addEventListener('click', async () => {
+      try {
+        const [picked] = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+        if (picked) fillContact({ name: picked.name?.[0] ?? '', contact: (picked.tel?.[0] ?? '').replace(/[^\d+]/g, '') });
+      } catch {
+        toast('Не удалось открыть контакты', 'error');
+      }
+    });
+  }
+
+  // Каждое открытие — с чистого листа
+  dialog.addEventListener('close', () => {
+    quickForm.reset();
+    state = {};
+    dateStep.disabled = true;
+    timeStep.disabled = true;
+    placeholder(datesBox, 'Сначала выберите услугу');
+    placeholder(timesBox, 'Выберите дату');
+    sync();
+  });
+}
