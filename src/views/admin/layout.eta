@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#E4E5E8">
   <title><%= it.title %> · Админка</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <%~ include('../partials/app-head') %>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">

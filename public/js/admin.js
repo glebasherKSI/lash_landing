@@ -18,6 +18,35 @@ const toast = (message, kind = 'ok') => {
   toastTimer = setTimeout(() => (toastEl.hidden = true), kind === 'error' ? 6000 : 2800);
 };
 
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Короткий отклик на Android (на iPhone вибрация из браузера недоступна)
+const haptic = () => navigator.vibrate?.(12);
+
+/** Шторка уезжает вниз и только потом закрывается. */
+const closeSheet = (dialog) => {
+  if (!dialog?.open) return;
+  if (reducedMotion() || !dialog.classList.contains('admin-dialog')) return dialog.close();
+  dialog.classList.add('is-closing');
+  dialog.addEventListener(
+    'animationend',
+    () => {
+      dialog.classList.remove('is-closing');
+      dialog.close();
+    },
+    { once: true },
+  );
+};
+
+/** Строка схлопывается по высоте, затем удаляется — список не прыгает. */
+const removeRow = (row) => {
+  if (!row) return;
+  if (reducedMotion()) return row.remove();
+  row.style.height = `${row.offsetHeight}px`;
+  row.getBoundingClientRect(); // зафиксировать высоту перед переходом
+  row.classList.add('is-removing');
+  setTimeout(() => row.remove(), 320);
+};
+
 const reloadWithFlash = (message) => {
   try {
     sessionStorage.setItem(FLASH_KEY, message);
@@ -122,7 +151,7 @@ document.addEventListener('submit', async (event) => {
     if (form.hasAttribute('data-reset')) form.reset();
     if (form.hasAttribute('data-reload') || result.reload) return reloadWithFlash(result.message);
     toast(result.message || 'Сохранено');
-    form.closest('dialog')?.close();
+    closeSheet(form.closest('dialog'));
   } catch {
     toast('Нет связи с сервером', 'error');
   } finally {
@@ -142,7 +171,10 @@ document.addEventListener('click', async (event) => {
   if (!result.ok) return toast(result.message, 'error');
   if (result.redirect) return redirectWithFlash(result.redirect, result.message);
   if (button.hasAttribute('data-reload') || result.reload) return reloadWithFlash(result.message);
-  if (button.hasAttribute('data-remove-row')) button.closest('[data-row]')?.remove();
+  if (button.hasAttribute('data-remove-row')) {
+    haptic();
+    removeRow(button.closest('[data-row]'));
+  }
   toast(result.message);
 });
 
@@ -178,6 +210,10 @@ document.addEventListener('click', async (event) => {
   if (!result.ok) return toast(result.message, 'error');
   card.className = card.className.replace(/status-\w+/, `status-${status}`);
   card.querySelector('[data-status-pill]').textContent = STATUS_LABELS[status];
+  haptic();
+  card.classList.remove('is-changed');
+  card.getBoundingClientRect(); // перезапуск анимации при повторной смене
+  card.classList.add('is-changed');
   toast(result.message);
 });
 
@@ -186,9 +222,16 @@ document.addEventListener('click', async (event) => {
 document.addEventListener('click', (event) => {
   const opener = event.target.closest('[data-open-dialog]');
   if (opener) document.getElementById(opener.dataset.openDialog)?.showModal();
-  if (event.target.closest('[data-close-dialog]')) event.target.closest('dialog')?.close();
+  if (event.target.closest('[data-close-dialog]')) closeSheet(event.target.closest('dialog'));
   // нажатие на затемнение вокруг шторки
-  if (event.target.matches('dialog.admin-dialog')) event.target.close();
+  if (event.target.matches('dialog.admin-dialog')) closeSheet(event.target);
+});
+
+// Esc и системный «назад» на Android закрывают шторку с той же анимацией
+document.addEventListener('cancel', (event) => {
+  if (!event.target.matches?.('dialog.admin-dialog')) return;
+  event.preventDefault();
+  closeSheet(event.target);
 });
 
 // Редактор услуги: одна форма для создания и правки
@@ -486,14 +529,15 @@ if (workSheet) {
     tile.querySelector('[data-work]').dataset.work = JSON.stringify(work);
   });
 
-  focusButton.addEventListener('click', () => workSheet.close());
+  focusButton.addEventListener('click', () => closeSheet(workSheet));
 
   deleteButton.addEventListener('click', async () => {
     if (!(await confirmAction(deleteButton.dataset.confirm))) return;
     const result = await post(`/admin/api/works/${work.id}/delete`);
     if (!result.ok) return toast(result.message, 'error');
-    workSheet.close();
-    tile.remove();
+    closeSheet(workSheet);
+    haptic();
+    removeRow(tile);
     toast(result.message);
   });
 
@@ -590,3 +634,17 @@ if (telegramForm) {
     stateTag.classList.toggle('tag--accent', enabled);
   });
 }
+
+/* ---------- Режим приложения ---------- */
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin/' }).catch(() => {});
+}
+
+// Приложение на главном экране не перезагружается само: при возврате через минуту и больше обновляем записи
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return (hiddenAt = Date.now());
+  const away = hiddenAt && Date.now() - hiddenAt > 60_000;
+  if (away && location.pathname === '/admin/bookings' && !document.querySelector('dialog[open]')) location.reload();
+});

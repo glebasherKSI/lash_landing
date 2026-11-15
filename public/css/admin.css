@@ -541,3 +541,69 @@
 .chat-pick__title { font-weight: 500; }
 .chat-pick__id { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .form-actions .btn--ghost { flex: 0 1 auto; }
+
+/* ============ Анимации и ощущение приложения ============ */
+/* В режиме приложения долгое нажатие на навигацию не должно выделять текст и открывать меню iOS */
+.tabbar, .page-head, .admin-side, .menu-item, .acc__head { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* Удаление: строка схлопывается, список подтягивается плавно */
+.is-removing {
+  height: 0 !important; min-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important;
+  margin: 0 !important; opacity: 0; transform: scale(.96); overflow: hidden; pointer-events: none;
+  transition: height .3s ease, padding .3s ease, opacity .2s ease, transform .3s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Переходы между разделами: страница плавно сменяется, панель вкладок и боковое меню стоят на месте */
+  @view-transition { navigation: auto; }
+  .tabbar { view-transition-name: tabbar; }
+  .admin-side { view-transition-name: admin-side; }
+  ::view-transition-old(root) { animation: vt-out .16s ease both; }
+  ::view-transition-new(root) { animation: vt-in .3s cubic-bezier(.2, .8, .2, 1) both; }
+  @keyframes vt-out { to { opacity: 0; } }
+  @keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+
+  /* Карточки и строки появляются волной */
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > * { animation: rise .42s cubic-bezier(.2, .8, .2, 1) both; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(2) { animation-delay: 30ms; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(3) { animation-delay: 60ms; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(4) { animation-delay: 90ms; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(5) { animation-delay: 120ms; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(6) { animation-delay: 150ms; }
+  :is(.booking-list, .sort-list, .works-admin, .acc-list, .week, .exc-list) > :nth-child(n + 7) { animation-delay: 180ms; }
+  .day-group__title, .filters, .page-head { animation: rise .35s cubic-bezier(.2, .8, .2, 1) both; }
+
+  /* Шторки: затемнение проявляется, при закрытии шторка уезжает вниз */
+  @keyframes fade-in { from { opacity: 0; } }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes sheet-down { to { transform: translateY(100%); } }
+  .admin-dialog::backdrop, .confirm-dialog::backdrop { animation: fade-in .3s ease both; }
+  .admin-dialog.is-closing { animation: sheet-down .24s cubic-bezier(.4, 0, 1, 1) both; }
+  .admin-dialog.is-closing::backdrop { animation: fade-out .24s ease both; }
+  .confirm-dialog[open] { animation: confirm-in .22s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes confirm-in { from { opacity: 0; transform: scale(.94); } }
+
+  /* Смена статуса записи: карточка «пружинит», метка статуса появляется заново */
+  @keyframes card-pop { 35% { transform: scale(.975); } 70% { transform: scale(1.01); } }
+  @keyframes pill-pop { from { opacity: 0; transform: scale(.6); } }
+  .booking-card.is-changed { animation: card-pop .45s cubic-bezier(.34, 1.56, .64, 1); }
+  .booking-card.is-changed .status-pill { animation: pill-pop .4s cubic-bezier(.34, 1.56, .64, 1); }
+
+  /* Разделы раскрываются по высоте, а не скачком (Chrome 131+, Safari 18.2+; в остальных — как раньше) */
+  .admin { interpolate-size: allow-keywords; }
+  .acc::details-content { height: 0; overflow: clip; transition: height .3s ease, content-visibility .3s allow-discrete; }
+  .acc[open]::details-content { height: auto; }
+
+  /* Отклик на нажатие */
+  .list-row:has(.list-row__main:active) { transform: scale(.985); }
+  .list-row { transition: transform .15s ease, opacity .2s, box-shadow .2s; }
+  .acc__head:active { background: var(--card); }
+  .menu-item:active .menu-item__icon { transform: scale(.92); }
+  .menu-item__icon { transition: transform .15s ease, background-color .2s; }
+}
+
+@media (min-width: 961px) and (prefers-reduced-motion: no-preference) {
+  @keyframes dialog-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+  .admin-dialog.is-closing { animation: dialog-out .18s ease both; }
+}
