@@ -840,3 +840,62 @@
   .an-nav { justify-content: flex-end; }
   .an-nav__title { flex: 0 1 auto; min-width: 220px; }
 }
+
+/* ============ Окошки для сторис ============ */
+.story { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.story-controls { gap: 16px; }
+.story-row { display: grid; gap: 8px; }
+.story-days.segmented--full { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.story-themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.story-theme {
+  display: grid; align-content: end; min-height: 72px; padding: 10px 12px; border-radius: 16px; text-align: left;
+  font-size: 14px; font-weight: 500; box-shadow: inset 0 0 0 1px rgba(19, 19, 21, .08); transition: box-shadow .2s, transform .15s;
+}
+.story-theme:active { transform: scale(.96); }
+.story-theme--pink { background: linear-gradient(150deg, #F6DDE2, #E8B9C4); }
+.story-theme--light { background: radial-gradient(circle at 85% 15%, var(--accent), transparent 60%), #F7F7F8; }
+.story-theme--dark { background: linear-gradient(150deg, #2B2B33, #131315); color: var(--white); }
+.story-theme[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+.story-stage { display: grid; justify-items: center; gap: 10px; }
+.story-phone {
+  position: relative; width: min(100%, 300px); aspect-ratio: 9 / 16; border-radius: 30px; overflow: hidden;
+  background: var(--card); box-shadow: 0 24px 60px -30px rgba(19, 19, 21, .55), 0 0 0 6px var(--surface);
+  transition: opacity .2s;
+}
+.story-canvas { display: block; width: 100%; height: 100%; }
+/* Зона под стикер: те же координаты, что в js/modules/story.js (STICKER_ZONE на холсте 1080×1920) */
+.story-sticker-zone {
+  position: absolute; left: 17.6%; top: 72.4%; width: 64.8%; height: 11.46%;
+  display: grid; place-items: center; border: 2px dashed rgba(19, 19, 21, .35); border-radius: 14px; pointer-events: none;
+}
+.story-sticker-zone span { padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .75); font-size: 11px; font-weight: 600; color: var(--text); }
+.story[data-theme="dark"] .story-sticker-zone { border-color: rgba(255, 255, 255, .45); }
+.story-stage__hint { max-width: 320px; text-align: center; font-size: 13px; }
+.story.is-loading .story-phone { opacity: .6; }
+
+.story-days-list { display: grid; gap: 10px; }
+.story-day { display: grid; gap: 6px; }
+.story-day__label { font-size: 15px; }
+.story-day__label b { font-weight: 600; margin-right: 4px; }
+.story-day__times { display: flex; flex-wrap: wrap; gap: 6px; }
+.story-time {
+  min-height: 40px; min-width: 72px; padding: 0 14px; border-radius: 999px; font-weight: 500; font-variant-numeric: tabular-nums;
+  background: var(--accent); transition: background-color .2s, color .2s, transform .15s, opacity .2s;
+}
+.story-time:active { transform: scale(.94); }
+.story-time[aria-pressed="false"] { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); text-decoration: line-through; }
+.story-actions { grid-template-columns: auto minmax(0, 1fr); display: grid; }
+.story-actions .btn:disabled { opacity: .4; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes story-fresh { from { opacity: .55; } }
+  .story-canvas.is-fresh { animation: story-fresh .3s ease; }
+}
+
+@media (min-width: 961px) {
+  .story { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+  .story-stage { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 16px; }
+  .story-controls, .story-windows, .story-actions { grid-column: 1; }
+  .story-actions { display: flex; }
+}

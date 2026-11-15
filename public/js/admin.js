@@ -889,3 +889,4 @@ if (quickForm) {
 /* ---------- Аналитика: модуль грузится только на её странице ---------- */
 
 if (document.querySelector('[data-analytics]')) import('./modules/analytics.js').then((m) => m.initAnalytics());
+if (document.querySelector('[data-story]')) import('./modules/story.js').then((m) => m.initStory());

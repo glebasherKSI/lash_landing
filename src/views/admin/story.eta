@@ -1,0 +1,61 @@
+<% layout('./layout') %>
+<header class="page-head">
+  <h1 class="page-title">Окошки для сторис</h1>
+</header>
+
+<div class="story" data-story>
+  <section class="panel story-controls" aria-label="Что показать">
+    <div class="form-grid">
+      <div class="field">
+        <label for="st-service">Для какой услуги</label>
+        <select id="st-service" class="select" data-story-service>
+<% for (const s of it.services) { %>
+          <option value="<%= s.id %>"<%~ s.id === it.defaultServiceId ? ' selected' : '' %>><%= s.title %> · <%= s.duration_min %> мин</option>
+<% } %>
+        </select>
+        <p class="field-hint">От длительности зависит, какие окна свободны.</p>
+      </div>
+      <div class="field">
+        <label for="st-from">С какого дня</label>
+        <input id="st-from" type="date" min="<%= it.today %>" value="<%= it.today %>" data-story-from>
+      </div>
+    </div>
+    <div class="story-row">
+      <span class="field__label">Сколько дней</span>
+      <div class="segmented segmented--full story-days" role="group" aria-label="Сколько дней" data-story-days>
+<% for (const n of [3, 5, it.maxDays]) { %>
+        <button type="button" class="segmented__item" data-days="<%= n %>" aria-current="<%= n === it.maxDays %>"><%= n %> <%= n < 5 ? 'дня' : 'дней' %></button>
+<% } %>
+      </div>
+    </div>
+    <div class="story-row">
+      <span class="field__label">Оформление</span>
+      <div class="story-themes" role="group" aria-label="Оформление" data-story-themes>
+        <button type="button" class="story-theme story-theme--pink" data-theme="pink" aria-pressed="true"><span>Розовое</span></button>
+        <button type="button" class="story-theme story-theme--light" data-theme="light" aria-pressed="false"><span>Светлое</span></button>
+        <button type="button" class="story-theme story-theme--dark" data-theme="dark" aria-pressed="false"><span>Тёмное</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="story-stage" aria-label="Превью сторис">
+    <div class="story-phone">
+      <canvas class="story-canvas" width="1080" height="1920" data-story-canvas role="img" aria-label="Превью сторис со свободными окнами"></canvas>
+      <div class="story-sticker-zone" aria-hidden="true"><span>Сюда — стикер «Ссылка»</span></div>
+    </div>
+    <p class="muted story-stage__hint">Пунктирной рамки на картинке не будет: это подсказка, куда в Instagram поставить стикер со ссылкой на запись.</p>
+  </section>
+
+  <section class="panel story-windows" aria-labelledby="st-windows-title">
+    <div class="panel__bar"><h2 class="h3" id="st-windows-title">Окна на картинке</h2></div>
+    <p class="muted panel__hint">Нажмите на время, чтобы скрыть его со сторис. В расписании оно останется свободным.</p>
+    <div class="story-days-list" data-story-list><p class="muted">Загружаю окна…</p></div>
+  </section>
+
+  <div class="sticky-save story-actions">
+    <button type="button" class="btn btn--ghost" data-story-download>Скачать</button>
+    <button type="button" class="btn btn--dark" data-story-share>Поделиться</button>
+  </div>
+</div>
+
+<script type="application/json" id="story-brand"><%~ JSON.stringify(it.brand).replace(/</g, '\\u003c') %></script>

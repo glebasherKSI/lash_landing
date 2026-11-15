@@ -26,6 +26,7 @@
     ['/admin/schedule', 'Расписание', 'i-clock'],
   ];
   const extra = [
+    ['/admin/story', 'Окошки для сторис', 'i-story'],
     ['/admin/works', 'Работы', 'i-image'],
     ['/admin/effects', 'Эффекты', 'i-sparkle'],
     ['/admin/settings', 'Настройки', 'i-gear'],
