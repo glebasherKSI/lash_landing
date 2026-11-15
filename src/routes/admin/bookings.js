@@ -7,6 +7,7 @@ import { BookingError, createBooking, getDaySlots } from '../../lib/booking.js';
 import { addDays, describeDate, formatDateLong, formatTime, formatTimestampLocal, isValidISODate, todayISO } from '../../lib/time.js';
 import { adminBookingSchema, bookingStatusSchema } from '../../validation/schemas.js';
 import { formatDuration } from '../../lib/format.js';
+import { buildMonth, isValidMonth, monthGrid } from '../../lib/calendar.js';
 import { formatPhone } from '../../../public/js/modules/phone.js';
 import { action, idParam, notFound } from './helpers.js';
 
@@ -19,7 +20,51 @@ const PERIODS = {
   all: { label: 'Все', range: () => ({}) },
 };
 
+const VIEWS = ['list', 'calendar'];
+const VIEW_COOKIE = 'bookings_view';
+const YEAR_MS = 365 * 24 * 3600 * 1000;
+
+const toCard = (booking) => ({
+  ...booking,
+  time: `${formatTime(booking.start_min)}–${formatTime(booking.end_min)}`,
+  createdLocal: formatTimestampLocal(booking.created_at),
+});
+
+// Режим «Календарь»: месяц из ?month, выбранный день из ?day (по умолчанию сегодня или 1-е число)
+const calendarData = (query, today) => {
+  const day = isValidISODate(String(query.day ?? '')) ? query.day : null;
+  const month = isValidMonth(query.month) ? query.month : (day ?? today).slice(0, 7);
+  const { from, to } = monthGrid(month);
+  const cal = buildMonth({ month, today, bookings: listBookings({ fromDate: from, toDate: to }).map(toCard), hoursFor: getDayHours });
+  const selected = day?.startsWith(month) ? day : today.startsWith(month) ? today : `${month}-01`;
+  return { ...cal, selected, currentMonth: today.slice(0, 7) };
+};
+
 bookingsRouter.get('/bookings', (req, res) => {
+  // выбранный режим запоминается: вкладка «Записи» открывается так, как мастер оставила
+  let view = req.cookies[VIEW_COOKIE];
+  if (VIEWS.includes(req.query.view)) {
+    view = req.query.view;
+    res.cookie(VIEW_COOKIE, view, { maxAge: YEAR_MS, httpOnly: true, sameSite: 'lax', path: '/admin' });
+  }
+  if (view === 'calendar') {
+    const today = todayISO();
+    return res.view('admin/bookings', {
+      title: 'Записи',
+      view,
+      cal: calendarData(req.query, today),
+      groups: [],
+      statusLabels: STATUS_LABELS,
+      services: listServices(),
+      effects: listEffects(),
+      formatDuration,
+      formatPhone,
+      formatDateLong,
+      formatTime,
+      today,
+    });
+  }
+
   const status = BOOKING_STATUSES.includes(req.query.status) ? req.query.status : '';
   const period = req.query.period in PERIODS ? req.query.period : 'upcoming';
   const today = todayISO();
@@ -39,15 +84,12 @@ bookingsRouter.get('/bookings', (req, res) => {
       };
       groups.push(group);
     }
-    group.items.push({
-      ...booking,
-      time: `${formatTime(booking.start_min)}–${formatTime(booking.end_min)}`,
-      createdLocal: formatTimestampLocal(booking.created_at),
-    });
+    group.items.push(toCard(booking));
   }
 
   res.view('admin/bookings', {
     title: 'Записи',
+    view: 'list',
     groups,
     status,
     period,

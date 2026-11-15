@@ -223,6 +223,7 @@ document.addEventListener('click', async (event) => {
   card.classList.remove('is-changed');
   card.getBoundingClientRect(); // перезапуск анимации при повторной смене
   card.classList.add('is-changed');
+  document.dispatchEvent(new CustomEvent('booking:changed'));
   toast(result.message);
 });
 
@@ -953,6 +954,12 @@ if (quickForm) {
     });
   }
 
+  // «Записать на этот день» из календаря: дата выберется сама после выбора услуги, если там есть окна
+  document.addEventListener('click', (event) => {
+    const preset = event.target.closest('[data-quick-date]');
+    if (preset) state = { date: preset.dataset.quickDate };
+  });
+
   // Каждое открытие — с чистого листа
   dialog.addEventListener('close', () => {
     quickForm.reset();
@@ -971,6 +978,7 @@ if (quickForm) {
 
 if (document.querySelector('[data-analytics]')) import('./modules/analytics.js').then((m) => m.initAnalytics());
 if (document.querySelector('[data-story]')) import('./modules/story.js').then((m) => m.initStory());
+if (document.querySelector('[data-calendar]')) import('./modules/calendar.js').then((m) => m.initCalendar({ haptic }));
 
 /* ---------- Клиенты: поиск по списку и маска номера в карточке ---------- */
 

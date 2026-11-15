@@ -1,15 +1,91 @@
 <% layout('./layout') %>
 <%
   const STATUS_FILTER_LABELS = { new: 'Новые', confirmed: 'Подтверждённые', cancelled: 'Отменённые', done: 'Выполненные' };
-  const contactHref = (c) => (c.startsWith('@') ? 'https://t.me/' + c.slice(1) : 'tel:' + c.replace(/[^\d+]/g, ''));
+  const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
+  // «5 ч», «4,5 ч» — коротко для клетки календаря
+  const shortHours = (min) => `${String(Math.round(min / 30) / 2).replace('.', ',')} ч`;
 %>
 <header class="page-head">
   <h1 class="page-title">Записи</h1>
-  <button type="button" class="btn btn--dark page-action" data-open-dialog="booking-dialog" aria-label="Добавить запись">
-    <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span class="page-action__label">Добавить запись</span>
-  </button>
+  <div class="page-head__actions">
+    <nav class="view-switch" aria-label="Вид">
+      <a class="view-switch__item" href="?view=list" aria-label="Списком"<%~ it.view === 'list' ? ' aria-current="true"' : '' %>><svg aria-hidden="true"><use href="#i-list"/></svg></a>
+      <a class="view-switch__item" href="?view=calendar" aria-label="Календарём"<%~ it.view === 'calendar' ? ' aria-current="true"' : '' %>><svg aria-hidden="true"><use href="#i-calendar"/></svg></a>
+    </nav>
+    <button type="button" class="btn btn--dark page-action" data-open-dialog="booking-dialog" aria-label="Добавить запись">
+      <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span class="page-action__label">Добавить запись</span>
+    </button>
+  </div>
 </header>
 
+<% if (it.view === 'calendar') { const cal = it.cal; %>
+<div class="cal" data-calendar data-month="<%= cal.month %>" data-selected="<%= cal.selected %>">
+  <div class="cal-top" data-cal-top>
+    <div class="cal-nav">
+      <a class="icon-btn icon-btn--plain" href="?view=calendar&month=<%= cal.prev %>" data-cal-shift="-1" aria-label="Предыдущий месяц"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></a>
+      <h2 class="cal-nav__title" aria-live="polite"><%= cal.title %></h2>
+<% if (cal.month !== cal.currentMonth) { %>
+      <a class="cal-nav__today" href="?view=calendar" data-cal-shift="0">Сегодня</a>
+<% } %>
+      <a class="icon-btn icon-btn--plain" href="?view=calendar&month=<%= cal.next %>" data-cal-shift="1" aria-label="Следующий месяц"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+    </div>
+
+    <div class="cal-sheet" data-cal-swipe>
+      <div class="cal-weekdays" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+      <div class="cal-grid" role="grid" aria-label="<%= cal.title %>">
+<% for (const week of cal.weeks) { %>
+        <div class="cal-week" role="row">
+<% for (const d of week) {
+     const cls = ['cal-day', d.inMonth ? '' : 'is-other', d.isToday ? 'is-today' : '', d.isPast ? 'is-past' : '', d.hours ? '' : 'is-off', d.count ? 'has-items' : ''].filter(Boolean).join(' ');
+     const label = `${d.day}${d.count ? `, ${d.count} ${plural(d.count, 'запись', 'записи', 'записей')}, ${shortHours(d.busyMin)}` : d.hours ? ', свободно' : ', выходной'}`; %>
+<% if (d.inMonth) { %>
+          <button type="button" role="gridcell" class="<%= cls %>" data-cal-day="<%= d.iso %>" aria-pressed="<%= d.iso === cal.selected %>" aria-label="<%= label %>" data-load="<%= d.load.toFixed(2) %>">
+<% } else { %>
+          <a role="gridcell" class="<%= cls %>" href="?view=calendar&month=<%= d.iso.slice(0, 7) %>&day=<%= d.iso %>" data-cal-shift="<%= d.iso < cal.month ? -1 : 1 %>" aria-label="<%= label %>" data-load="<%= d.load.toFixed(2) %>">
+<% } %>
+            <span class="cal-day__num"><%= d.day %></span>
+            <span class="cal-day__hours"><%= d.count ? shortHours(d.busyMin) : '' %></span>
+            <span class="cal-day__bar" aria-hidden="true"></span>
+<% if (d.hasNew) { %><span class="cal-day__new" aria-hidden="true"></span><% } %>
+          <%~ d.inMonth ? '</button>' : '</a>' %>
+<% } %>
+        </div>
+<% } %>
+      </div>
+    </div>
+
+    <dl class="cal-total">
+      <div><dt>Записей</dt><dd><%= cal.total.count %></dd></div>
+      <div><dt>Работы</dt><dd><%= shortHours(cal.total.busyMin) %></dd></div>
+      <div><dt>Доход</dt><dd><%= cal.total.revenue %> <small>BYN</small></dd></div>
+      <div><dt>Свободно</dt><dd><%= cal.total.freeMin ? shortHours(cal.total.freeMin) : '—' %></dd></div>
+    </dl>
+  </div>
+
+<% for (const d of cal.days) { %>
+  <section class="cal-panel" data-cal-panel="<%= d.iso %>" aria-labelledby="p-<%= d.iso %>"<%~ d.iso === cal.selected ? '' : ' hidden' %>>
+    <div class="cal-panel__head">
+      <h2 class="cal-panel__title" id="p-<%= d.iso %>"><%= it.formatDateLong(d.iso) %><% if (d.isToday) { %> <span class="tag tag--accent">сегодня</span><% } %></h2>
+      <p class="cal-panel__meta"><%= d.hours ? `${it.formatTime(d.hours.start)}–${it.formatTime(d.hours.end)}` : 'Выходной' %><% if (d.count) { %> · занято <%= it.formatDuration(d.busyMin) %> · <%= d.revenue %> BYN<% } %></p>
+    </div>
+<% if (d.items.length) { %>
+    <ul class="booking-list">
+<% for (const b of d.items) { %>
+      <%~ include('./_booking-card', { b, statusLabels: it.statusLabels, formatPhone: it.formatPhone }) %>
+<% } %>
+    </ul>
+<% } else { %>
+    <p class="cal-panel__empty muted"><%= d.hours ? 'Записей нет — день свободен.' : 'Выходной, записей нет.' %></p>
+<% } %>
+<% if (!d.isPast) { %>
+    <button type="button" class="btn btn--ghost cal-panel__add" data-open-dialog="booking-dialog" data-quick-date="<%= d.iso %>">
+      <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Записать на этот день
+    </button>
+<% } %>
+  </section>
+<% } %>
+</div>
+<% } else { %>
 <nav class="filters" aria-label="Фильтр записей" data-bookings-filters>
   <div class="segmented segmented--full" role="group" aria-label="Период" data-segmented>
     <span class="segmented__thumb" aria-hidden="true"></span>
@@ -44,34 +120,15 @@
     <span class="day-group__count"><%= group.items.length %></span>
   </h2>
   <ul class="booking-list">
-<% for (const b of group.items) { const [start, end] = b.time.split('–'); %>
-    <li class="booking-card status-<%= b.status %>" data-row data-booking="<%= b.id %>">
-      <div class="booking-card__top">
-        <p class="booking-card__time"><%= start %><span class="booking-card__end">–<%= end %></span></p>
-        <span class="status-pill" data-status-pill><%= it.statusLabels[b.status] %></span>
-      </div>
-      <p class="booking-card__service"><%= b.service_title %><% if (b.effect_name) { %> · <%= b.effect_name %><% } %></p>
-      <p class="booking-card__client"><%= b.client_name %> <span class="booking-card__price"><%= b.price_byn %> BYN</span></p>
-<% if (b.comment) { %><p class="booking-card__comment">«<%= b.comment %>»</p><% } %>
-
-      <div class="booking-card__actions">
-        <a class="btn btn--ghost btn--sm booking-card__contact" href="<%= contactHref(b.contact) %>"<%~ b.contact.startsWith('@') ? ' target="_blank" rel="noopener"' : '' %>>
-          <svg class="icon" aria-hidden="true"><use href="#<%= b.contact.startsWith('@') ? 'i-telegram' : 'i-phone' %>"/></svg><%= it.formatPhone(b.contact) %>
-        </a>
-        <button type="button" class="btn btn--dark btn--sm" data-status-to="confirmed" data-show-for="new">Подтвердить</button>
-        <button type="button" class="btn btn--dark btn--sm" data-status-to="done" data-show-for="confirmed">Выполнена</button>
-        <button type="button" class="btn btn--ghost btn--sm" data-status-to="new" data-show-for="cancelled done">Вернуть в новые</button>
-        <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-status-to="cancelled" data-show-for="new confirmed"
-                data-confirm="Отменить запись <%= b.client_name %> на <%= b.time %>? Время снова станет свободным." data-confirm-ok="Отменить запись">Отменить</button>
-      </div>
-      <p class="booking-card__meta"><%= b.source === 'admin' ? 'добавлена вручную' : 'с сайта' %> · заявка <%= b.createdLocal %></p>
-    </li>
+<% for (const b of group.items) { %>
+    <%~ include('./_booking-card', { b, statusLabels: it.statusLabels, formatPhone: it.formatPhone }) %>
 <% } %>
   </ul>
 </section>
 <% } %>
 
 </div>
+<% } %>
 
 <dialog class="admin-dialog quick" id="booking-dialog" aria-labelledby="booking-dialog-title">
   <form class="sheet admin-form" data-api action="/admin/api/bookings" data-quick-form>

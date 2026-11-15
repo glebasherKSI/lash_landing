@@ -1,0 +1,27 @@
+<%
+  // Карточка записи: общая для списка и календаря. it = { b, statusLabels, formatPhone }
+  const b = it.b;
+  const [start, end] = b.time.split('–');
+  const contactHref = (c) => (c.startsWith('@') ? 'https://t.me/' + c.slice(1) : 'tel:' + c.replace(/[^\d+]/g, ''));
+%>
+<li class="booking-card status-<%= b.status %>" data-row data-booking="<%= b.id %>">
+  <div class="booking-card__top">
+    <p class="booking-card__time"><%= start %><span class="booking-card__end">–<%= end %></span></p>
+    <span class="status-pill" data-status-pill><%= it.statusLabels[b.status] %></span>
+  </div>
+  <p class="booking-card__service"><%= b.service_title %><% if (b.effect_name) { %> · <%= b.effect_name %><% } %></p>
+  <p class="booking-card__client"><%= b.client_name %> <span class="booking-card__price"><%= b.price_byn %> BYN</span></p>
+<% if (b.comment) { %><p class="booking-card__comment">«<%= b.comment %>»</p><% } %>
+
+  <div class="booking-card__actions">
+    <a class="btn btn--ghost btn--sm booking-card__contact" href="<%= contactHref(b.contact) %>"<%~ b.contact.startsWith('@') ? ' target="_blank" rel="noopener"' : '' %>>
+      <svg class="icon" aria-hidden="true"><use href="#<%= b.contact.startsWith('@') ? 'i-telegram' : 'i-phone' %>"/></svg><%= it.formatPhone(b.contact) %>
+    </a>
+    <button type="button" class="btn btn--dark btn--sm" data-status-to="confirmed" data-show-for="new">Подтвердить</button>
+    <button type="button" class="btn btn--dark btn--sm" data-status-to="done" data-show-for="confirmed">Выполнена</button>
+    <button type="button" class="btn btn--ghost btn--sm" data-status-to="new" data-show-for="cancelled done">Вернуть в новые</button>
+    <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-status-to="cancelled" data-show-for="new confirmed"
+            data-confirm="Отменить запись <%= b.client_name %> на <%= b.time %>? Время снова станет свободным." data-confirm-ok="Отменить запись">Отменить</button>
+  </div>
+  <p class="booking-card__meta"><%= b.source === 'admin' ? 'добавлена вручную' : 'с сайта' %> · заявка <%= b.createdLocal %></p>
+</li>
