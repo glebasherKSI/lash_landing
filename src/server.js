@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import { Eta } from 'eta';
 import { ROOT, config } from './config.js';
 import { cookieMiddleware } from './lib/cookies.js';
+import { startTelegramPolling } from './lib/telegram.js';
+import { getBooking, setBookingStatus } from './db/repos/bookings.js';
 import { csrfToken } from './lib/csrf.js';
 import { ASSET_PREFIX, asset } from './lib/assets.js';
 import { getSettings } from './db/repos/settings.js';
@@ -119,3 +121,6 @@ app.listen(config.PORT, config.HOST, () => {
   console.log(`Сайт:    http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${config.PORT}`);
   console.log(`Админка: http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${config.PORT}/admin`);
 });
+
+// Кнопки «Подтвердить / Отменить» под уведомлениями в Telegram
+startTelegramPolling({ getBooking, setBookingStatus });

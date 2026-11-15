@@ -6,6 +6,7 @@
   "id": "/admin/",
   "start_url": "/admin/bookings",
   "scope": "/admin/",
+  "handle_links": "preferred",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#E4E5E8",
