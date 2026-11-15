@@ -728,7 +728,8 @@
 .an-kpi__sub:empty, .an-kpi__delta:empty { display: none; }
 
 /* Карточки */
-.an-card { gap: 12px; }
+/* колонка не шире карточки: раскрытая таблица прокручивается внутри, а не распирает график */
+.an-card { gap: 12px; grid-template-columns: minmax(0, 1fr); }
 .an-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .an-card__title { font-size: 17px; font-weight: 500; }
 .an-card__hint { font-size: 13px; margin-top: -6px; }
