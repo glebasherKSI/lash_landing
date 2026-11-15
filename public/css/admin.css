@@ -1054,3 +1054,7 @@
 .cal-day-sheet .cal-panel { animation: none; }
 .cal-day-sheet .booking-card { background: var(--card); }
 .cal-day-sheet .booking-card.status-new { background: #FCF5F6; }
+
+/* Пока открыта шторка, страница под ней не прокручивается (иначе на iPhone жест «проваливается» на фон) */
+html:has(dialog[open]), html:has(dialog[open]) body { overflow: hidden; }
+.admin-dialog { overscroll-behavior: contain; }
