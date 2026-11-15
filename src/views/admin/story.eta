@@ -5,20 +5,9 @@
 
 <div class="story" data-story>
   <section class="panel story-controls" aria-label="Что показать">
-    <div class="form-grid">
-      <div class="field">
-        <label for="st-service">Для какой услуги</label>
-        <select id="st-service" class="select" data-story-service>
-<% for (const s of it.services) { %>
-          <option value="<%= s.id %>"<%~ s.id === it.defaultServiceId ? ' selected' : '' %>><%= s.title %> · <%= s.duration_min %> мин</option>
-<% } %>
-        </select>
-        <p class="field-hint">От длительности зависит, какие окна свободны.</p>
-      </div>
-      <div class="field">
-        <label for="st-from">С какого дня</label>
-        <input id="st-from" type="date" min="<%= it.today %>" value="<%= it.today %>" data-story-from>
-      </div>
+    <div class="field">
+      <label for="st-from">С какого дня</label>
+      <input id="st-from" type="date" min="<%= it.today %>" value="<%= it.today %>" data-story-from>
     </div>
     <div class="story-row">
       <span class="field__label">Сколько дней</span>

@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import { getService, listServices } from '../../db/repos/catalog.js';
 import { getDayHours } from '../../db/repos/schedule.js';
 import { getSettings } from '../../db/repos/settings.js';
-import { getDaySlots } from '../../lib/booking.js';
+import { getDaySlots, referenceService } from '../../lib/booking.js';
 import { pickWindows } from '../../lib/slots.js';
 import { addDays, describeDate, formatTime, isValidISODate, todayISO, weekdayOf } from '../../lib/time.js';
 
@@ -13,19 +12,10 @@ export const STORY_MAX_DAYS = 7;
 const STORY_DAYS_AHEAD = 30;
 const WEEKDAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-// По умолчанию — самая короткая полноценная процедура, как у «Ближайшего окна» на сайте
-const defaultService = (services) => {
-  const full = services.filter((s) => s.duration_min >= 60);
-  return (full.length ? full : services).reduce((min, s) => (!min || s.duration_min < min.duration_min ? s : min), null);
-};
-
 storyRouter.get('/story', (_req, res) => {
-  const services = listServices({ activeOnly: true });
   const settings = getSettings();
   res.view('admin/story', {
     title: 'Окошки для сторис',
-    services,
-    defaultServiceId: defaultService(services)?.id,
     today: todayISO(),
     maxDays: STORY_MAX_DAYS,
     brand: {
@@ -38,8 +28,10 @@ storyRouter.get('/story', (_req, res) => {
 });
 
 storyRouter.get('/api/story', (req, res) => {
-  const service = getService(Number(req.query.service_id));
-  if (!service) return res.status(404).json({ ok: false, message: 'Услуга не найдена' });
+  // Процедуры у мастера почти одинаковые по длительности: окна считаются по обычной процедуре,
+  // а подходит ли конкретная услуга — проверит форма записи на сайте
+  const service = referenceService();
+  if (!service) return res.status(404).json({ ok: false, message: 'Сначала добавьте услугу' });
   const today = todayISO();
   const from = isValidISODate(String(req.query.from)) && req.query.from >= today ? String(req.query.from) : today;
   if (from > addDays(today, STORY_DAYS_AHEAD)) return res.status(400).json({ ok: false, message: 'Слишком далеко вперёд' });
@@ -54,5 +46,5 @@ storyRouter.get('/api/story', (req, res) => {
     return { date, working, weekday: WEEKDAYS[weekdayOf(date)], label: d.label, day: d.day, month: d.month, times: windows.map((w) => formatTime(w.start)) };
   });
 
-  res.json({ ok: true, service: { id: service.id, title: service.title }, from, to: addDays(from, days - 1), days: list });
+  res.json({ ok: true, from, to: addDays(from, days - 1), days: list });
 });

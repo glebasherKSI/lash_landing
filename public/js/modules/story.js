@@ -42,7 +42,7 @@ const periodLabel = (days) => {
   return first.month === last.month ? `${first.day}–${last.day} ${last.month}` : `${first.label} – ${last.label}`;
 };
 
-export const drawStory = (canvas, { days, service, theme: themeName, brand, hidden }) => {
+export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => {
   const ctx = canvas.getContext('2d');
   const t = THEMES[themeName];
   const chipBg = t.chip === 'accent' ? brand.accent : t.chip;
@@ -92,7 +92,7 @@ export const drawStory = (canvas, { days, service, theme: themeName, brand, hidd
   ctx.fillStyle = t.muted;
   // Период — по дням, которые реально есть на картинке (выходные не показываются)
   const rows = days.filter((d) => d.working);
-  ctx.fillText(`${periodLabel(rows.length ? rows : days)} · ${service.title}`, PAD, 660);
+  ctx.fillText(periodLabel(rows.length ? rows : days), PAD, 660);
 
   // Дни: дата слева, окна справа
   const blockH = rows.length * (ROW_H + ROW_GAP) - ROW_GAP;
@@ -159,7 +159,6 @@ export const initStory = () => {
   if (!root) return;
   const canvas = root.querySelector('[data-story-canvas]');
   const list = root.querySelector('[data-story-list]');
-  const serviceSelect = root.querySelector('[data-story-service]');
   const fromInput = root.querySelector('[data-story-from]');
   const daysBox = root.querySelector('[data-story-days]');
   const themesBox = root.querySelector('[data-story-themes]');
@@ -195,7 +194,7 @@ export const initStory = () => {
   const load = async () => {
     const id = ++request;
     root.classList.add('is-loading');
-    const params = new URLSearchParams({ service_id: serviceSelect.value, from: fromInput.value, days: state.days });
+    const params = new URLSearchParams({ from: fromInput.value, days: state.days });
     const res = await fetch(`/admin/api/story?${params}`).then((r) => r.json());
     if (id !== request) return;
     root.classList.remove('is-loading');
@@ -232,10 +231,6 @@ export const initStory = () => {
     redraw();
   });
 
-  serviceSelect.addEventListener('change', () => {
-    state.hidden.clear();
-    load();
-  });
   fromInput.addEventListener('change', load);
 
   const toFile = () =>

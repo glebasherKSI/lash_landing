@@ -42,7 +42,7 @@ export const getBookingDays = ({ durationMin, settings = getSettings() }) => {
 };
 
 /** Услуга, по которой считается «Ближайшее окно»: самая короткая полноценная процедура (не снятие). */
-const referenceService = () => {
+export const referenceService = () => {
   const services = listServices({ activeOnly: true });
   const full = services.filter((s) => s.duration_min >= 60);
   const pool = full.length ? full : services;
