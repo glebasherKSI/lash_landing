@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { BOOKING_STATUSES, countBookingsByStatus, getBooking, listBookings, setBookingStatus } from '../../db/repos/bookings.js';
+import { BOOKING_STATUSES, countBookingsByStatus, getBooking, listBookings, listClients, setBookingStatus } from '../../db/repos/bookings.js';
 import { getService, listEffects, listServices } from '../../db/repos/catalog.js';
 import { getDayHours } from '../../db/repos/schedule.js';
 import { getSettings } from '../../db/repos/settings.js';
@@ -7,6 +7,7 @@ import { BookingError, createBooking, getDaySlots } from '../../lib/booking.js';
 import { addDays, describeDate, formatDateLong, formatTime, formatTimestampLocal, isValidISODate, todayISO } from '../../lib/time.js';
 import { adminBookingSchema, bookingStatusSchema } from '../../validation/schemas.js';
 import { formatDuration } from '../../lib/format.js';
+import { formatPhone } from '../../../public/js/modules/phone.js';
 import { action, idParam, notFound } from './helpers.js';
 
 export const bookingsRouter = Router();
@@ -58,6 +59,7 @@ bookingsRouter.get('/bookings', (req, res) => {
     services: listServices(),
     effects: listEffects(),
     formatDuration,
+    formatPhone,
     today,
   });
 });
@@ -91,6 +93,8 @@ bookingsRouter.get('/api/slots', (req, res) => {
   }));
   res.json({ ok: true, working: Boolean(getDayHours(date)), slots });
 });
+
+bookingsRouter.get('/api/clients', (_req, res) => res.json({ ok: true, clients: listClients() }));
 
 bookingsRouter.post(
   '/api/bookings/:id/status',

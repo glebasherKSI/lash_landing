@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidISODate, parseTime } from '../lib/time.js';
+import { normalizePhone, PHONE_ERROR } from '../../public/js/modules/phone.js';
 
 const trimmed = (max) => z.string().trim().max(max, `Не длиннее ${max} символов`);
 
@@ -10,26 +11,14 @@ const timeHHMM = z
   .refine((v) => parseTime(v) !== null, 'Время в формате ЧЧ:ММ')
   .transform((v) => parseTime(v));
 
-const PHONE_RE = /^\+?[\d\s()-]{7,20}$/;
-const TELEGRAM_RE = /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
-
-/** Телефон или ник в Telegram; нормализуется к «+375…» или «@nick». */
+/** Только белорусский мобильный номер; сохраняется в одном виде «+375291234567». */
 export const contactSchema = z
   .string()
   .trim()
-  .min(1, 'Укажите телефон или Telegram')
+  .min(1, 'Укажите номер телефона')
   .max(40)
-  .refine((v) => {
-    if (TELEGRAM_RE.test(v)) return true;
-    if (!PHONE_RE.test(v)) return false;
-    const digits = v.replace(/\D/g, '');
-    return digits.length >= 9 && digits.length <= 15;
-  }, 'Телефон (например +375 29 123-45-67) или Telegram (@username)')
-  .transform((v) => {
-    if (TELEGRAM_RE.test(v)) return v.startsWith('@') ? v : '@' + v;
-    const digits = v.replace(/\D/g, '');
-    return v.trim().startsWith('+') ? '+' + digits : digits;
-  });
+  .refine((v) => normalizePhone(v) !== null, PHONE_ERROR)
+  .transform((v) => normalizePhone(v));
 
 export const bookingRequestSchema = z.object({
   service_id: z.coerce.number().int().positive('Выберите услугу'),
@@ -179,7 +168,7 @@ export const adminBookingSchema = z.object({
   date: isoDate,
   time: timeHHMM,
   client_name: trimmed(60).min(1, 'Введите имя клиента'),
-  contact: trimmed(40).min(1, 'Введите контакт'),
+  contact: contactSchema,
   comment: trimmed(500).default(''),
   status: z.enum(['new', 'confirmed']).default('confirmed'),
   force: checkbox,

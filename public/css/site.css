@@ -800,3 +800,17 @@ a.glass-tile:hover { background: var(--white); }
   .work:hover img { transform: none; }
   .svc-card::after { display: none; }
 }
+
+/* ============ Телефон: +375 подставлен, вводятся только 9 цифр ============ */
+.phone-field {
+  display: flex; align-items: center; min-height: 52px; border-radius: 16px; background: var(--white);
+  box-shadow: inset 0 0 0 1px transparent; transition: box-shadow .2s;
+}
+.phone-field:hover { box-shadow: inset 0 0 0 1px var(--line); }
+.phone-field:focus-within { box-shadow: inset 0 0 0 2px var(--text); }
+.phone-field:has(input[aria-invalid="true"]) { box-shadow: inset 0 0 0 2px #B3261E; }
+.phone-field__code { flex: none; padding-left: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.phone-field input { flex: 1; min-width: 0; background: transparent !important; box-shadow: none !important; padding-left: 6px !important; font-variant-numeric: tabular-nums; }
+.admin .phone-field { min-height: 50px; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+.admin .phone-field:focus-within { box-shadow: inset 0 0 0 2px var(--text); }
+.phone-field input:focus-visible { box-shadow: none !important; }

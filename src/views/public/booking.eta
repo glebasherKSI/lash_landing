@@ -65,8 +65,11 @@
             <p class="field-error" data-error-for="client_name" role="alert"></p>
           </div>
           <div class="field">
-            <label for="f-contact">Телефон или Telegram</label>
-            <input id="f-contact" name="contact" autocomplete="tel" inputmode="text" required maxlength="40" placeholder="+375 29 123-45-67 или @username" aria-describedby="f-contact-hint">
+            <label for="f-contact">Телефон</label>
+            <div class="phone-field">
+              <span class="phone-field__code" aria-hidden="true">+375</span>
+              <input id="f-contact" name="contact" type="tel" inputmode="numeric" autocomplete="tel-national" required maxlength="14" placeholder="(29) 123-45-67" aria-describedby="f-contact-hint" data-phone>
+            </div>
             <p class="field-hint" id="f-contact-hint">Мастер подтвердит запись в течение пары часов</p>
             <p class="field-error" data-error-for="contact" role="alert"></p>
           </div>

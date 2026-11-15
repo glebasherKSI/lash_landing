@@ -1,4 +1,5 @@
 import { animateCount, animateListIn, animateSuccess, animateValueChange } from './motion.js';
+import { attachPhoneMask, isValidPhone, PHONE_ERROR } from './phone.js';
 
 const FLASH_DELAY_MS = 650; // дать странице доскроллить до формы
 
@@ -10,16 +11,9 @@ const formatDate = (iso) => {
   return DATE_LABEL.format(new Date(Date.UTC(y, m - 1, d)));
 };
 
-const PHONE_RE = /^\+?[\d\s()-]{7,20}$/;
-const TELEGRAM_RE = /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
-
 const validateContact = (value) => {
-  const v = value.trim();
-  if (!v) return 'Укажите телефон или Telegram';
-  if (TELEGRAM_RE.test(v)) return '';
-  const digits = v.replace(/\D/g, '');
-  if (PHONE_RE.test(v) && digits.length >= 9 && digits.length <= 15) return '';
-  return 'Телефон (например +375 29 123-45-67) или Telegram (@username)';
+  if (!value.trim()) return 'Укажите номер телефона';
+  return isValidPhone(value) ? '' : PHONE_ERROR;
 };
 
 /**
@@ -38,6 +32,7 @@ export const initBooking = ({ services = [], effects = [] }) => {
   const formError = form.querySelector('[data-form-error]');
   const summary = Object.fromEntries([...form.querySelectorAll('[data-summary]')].map((el) => [el.dataset.summary, el]));
   const csrf = form.elements._csrf.value;
+  attachPhoneMask(form.elements.contact);
 
   const state = { serviceId: null, date: null, time: null };
   let pending = null; // дата/время, которые нужно выбрать после загрузки

@@ -56,7 +56,7 @@
 
       <div class="booking-card__actions">
         <a class="btn btn--ghost btn--sm booking-card__contact" href="<%= contactHref(b.contact) %>"<%~ b.contact.startsWith('@') ? ' target="_blank" rel="noopener"' : '' %>>
-          <svg class="icon" aria-hidden="true"><use href="#<%= b.contact.startsWith('@') ? 'i-telegram' : 'i-phone' %>"/></svg><%= b.contact %>
+          <svg class="icon" aria-hidden="true"><use href="#<%= b.contact.startsWith('@') ? 'i-telegram' : 'i-phone' %>"/></svg><%= it.formatPhone(b.contact) %>
         </a>
         <button type="button" class="btn btn--dark btn--sm" data-status-to="confirmed" data-show-for="new">Подтвердить</button>
         <button type="button" class="btn btn--dark btn--sm" data-status-to="done" data-show-for="confirmed">Выполнена</button>
@@ -129,12 +129,16 @@
             <p class="field-error" data-error-for="client_name"></p>
           </div>
           <div class="field">
-            <label for="b-contact">Телефон или Telegram</label>
-            <input id="b-contact" name="contact" required maxlength="40" type="tel" inputmode="tel" autocomplete="off" enterkeyhint="done">
+            <label for="b-contact">Телефон</label>
+            <div class="phone-field">
+              <span class="phone-field__code" aria-hidden="true">+375</span>
+              <input id="b-contact" name="contact" required maxlength="14" type="tel" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="(29) 123-45-67" data-phone>
+            </div>
             <p class="field-error" data-error-for="contact"></p>
           </div>
         </div>
-        <p class="field-hint">Можно вставить «Аня +375 29 123-45-67» в любое поле — имя и телефон разложатся сами.</p>
+        <ul class="client-suggest" data-client-suggest hidden aria-label="Сохранённые клиентки"></ul>
+        <p class="field-hint">Начните вводить имя или номер — появятся сохранённые клиентки. Можно вставить «Аня +375 29 123-45-67» — имя и номер разложатся сами.</p>
       </fieldset>
 
       <details class="quick-more">

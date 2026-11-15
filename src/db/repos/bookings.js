@@ -47,3 +47,13 @@ export const insertBooking = (data) => insert.run(data).lastInsertRowid;
 
 export const setBookingStatus = (id, status) =>
   db.prepare('UPDATE bookings SET status = ? WHERE id = ?').run(status, id).changes;
+
+// Клиентки для подсказок в ручной записи: по номеру — последнее имя, число визитов, последний визит.
+// SQLite берёт client_name из строки с MAX(date) — так подставляется самое свежее имя.
+const selectClients = db.prepare(
+  `SELECT contact, client_name AS name, COUNT(*) AS visits, MAX(date) AS last
+   FROM bookings WHERE status != 'cancelled' AND contact LIKE '+375%' AND length(contact) = 13
+   GROUP BY contact ORDER BY last DESC LIMIT 1000`,
+);
+
+export const listClients = () => selectClients.all();

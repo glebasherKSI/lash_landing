@@ -1,6 +1,7 @@
 import { buildLashLines } from './lash-geometry.js';
 import { mountHeroWindow } from './modules/hero-window.js';
 import { parseContact } from './modules/contact-parse.js';
+import { attachPhoneMask, formatNational, formatPhone, normalizePhone, phoneDigits } from './modules/phone.js';
 
 const csrf = document.body.dataset.csrf;
 const toastEl = document.querySelector('.toast');
@@ -830,9 +831,14 @@ if (quickForm) {
     sync();
   });
 
+  attachPhoneMask(contactInput);
+
+  // Номер показывается в маске «(29) 123-45-67»; не белорусский номер не подставляем
   const fillContact = ({ name, contact }) => {
     if (name) nameInput.value = name;
-    if (contact) contactInput.value = contact;
+    if (contact && normalizePhone(contact)) contactInput.value = formatNational(contact);
+    else if (contact) toast('Номер не белорусский — введите его вручную', 'error');
+    hideSuggest();
     haptic();
   };
 
@@ -840,11 +846,57 @@ if (quickForm) {
   [nameInput, contactInput].forEach((input) =>
     input.addEventListener('paste', (event) => {
       const parsed = parseContact(event.clipboardData?.getData('text'));
-      if (!parsed.name || !parsed.contact) return;
+      if (!parsed.name || !normalizePhone(parsed.contact)) return;
       event.preventDefault();
       fillContact(parsed);
     }),
   );
+
+  /* Подсказки: сохранённые клиентки по имени или номеру */
+  const suggest = quickForm.querySelector('[data-client-suggest]');
+  const SUGGEST_LIMIT = 5;
+  let clients = null;
+
+  const hideSuggest = () => (suggest.hidden = true);
+
+  const showSuggest = async () => {
+    clients ??= await fetch('/admin/api/clients').then((r) => r.json()).then((r) => r.clients).catch(() => []);
+    const name = nameInput.value.trim().toLowerCase();
+    const digits = phoneDigits(contactInput.value);
+    // пустые поля — последние клиентки; иначе совпадение по имени или по цифрам номера
+    const found = clients
+      .filter((c) => (!name || c.name.toLowerCase().includes(name)) && (!digits || c.contact.slice(4).includes(digits)))
+      .slice(0, SUGGEST_LIMIT);
+    const exact = found.length === 1 && found[0].name === nameInput.value.trim() && normalizePhone(contactInput.value) === found[0].contact;
+    if (!found.length || exact) return hideSuggest();
+    suggest.replaceChildren(
+      ...found.map((c) => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'client-suggest__item';
+        const visits = c.visits === 1 ? '1 визит' : c.visits < 5 ? `${c.visits} визита` : `${c.visits} визитов`;
+        button.append(
+          Object.assign(document.createElement('span'), { className: 'client-suggest__name', textContent: c.name }),
+          Object.assign(document.createElement('span'), { className: 'client-suggest__meta', textContent: `${formatPhone(c.contact)} · ${visits}` }),
+        );
+        button.addEventListener('click', () => fillContact({ name: c.name, contact: c.contact }));
+        li.append(button);
+        return li;
+      }),
+    );
+    suggest.hidden = false;
+  };
+
+  [nameInput, contactInput].forEach((input) => {
+    input.addEventListener('focus', showSuggest);
+    input.addEventListener('input', showSuggest);
+  });
+  // нажатие на подсказку не должно уводить фокус и закрывать список раньше времени
+  suggest.addEventListener('pointerdown', (event) => event.preventDefault());
+  quickForm.addEventListener('focusout', () => setTimeout(() => {
+    if (![nameInput, contactInput].includes(document.activeElement)) hideSuggest();
+  }, 0));
 
   const pasteButton = quickForm.querySelector('[data-quick-paste]');
   if (navigator.clipboard?.readText) {
@@ -867,7 +919,7 @@ if (quickForm) {
     contactsButton.addEventListener('click', async () => {
       try {
         const [picked] = await navigator.contacts.select(['name', 'tel'], { multiple: false });
-        if (picked) fillContact({ name: picked.name?.[0] ?? '', contact: (picked.tel?.[0] ?? '').replace(/[^\d+]/g, '') });
+        if (picked) fillContact({ name: picked.name?.[0] ?? '', contact: picked.tel?.[0] ?? '' });
       } catch {
         toast('Не удалось открыть контакты', 'error');
       }
@@ -877,6 +929,8 @@ if (quickForm) {
   // Каждое открытие — с чистого листа
   dialog.addEventListener('close', () => {
     quickForm.reset();
+    hideSuggest();
+    clients = null; // при следующем открытии — свежий список, с только что записанными
     state = {};
     dateStep.disabled = true;
     timeStep.disabled = true;

@@ -899,3 +899,22 @@
   .story-controls, .story-windows, .story-actions { grid-column: 1; }
   .story-actions { display: flex; }
 }
+
+/* ============ Подсказки клиенток в быстрой записи ============ */
+.client-suggest {
+  display: grid; gap: 2px; padding: 4px; margin-top: -2px; border-radius: 18px; background: var(--white);
+  box-shadow: 0 12px 30px -16px rgba(19, 19, 21, .35), inset 0 0 0 1px var(--line);
+}
+.client-suggest[hidden] { display: none; }
+.client-suggest__item {
+  display: grid; gap: 1px; width: 100%; min-height: 52px; padding: 8px 14px; border-radius: 14px; text-align: left;
+  transition: background-color .15s, transform .15s;
+}
+.client-suggest__item:hover, .client-suggest__item:focus-visible { background: var(--card); }
+.client-suggest__item:active { transform: scale(.98); background: var(--card); }
+.client-suggest__name { font-weight: 500; }
+.client-suggest__meta { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .client-suggest:not([hidden]) { animation: rise .2s cubic-bezier(.2, .8, .2, 1); }
+}
+.quick-times > p { grid-column: 1 / -1; }

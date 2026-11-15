@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { getSecret, getSettings } from '../db/repos/settings.js';
 import { formatDateLong, formatTime } from './time.js';
+import { formatPhone } from '../../public/js/modules/phone.js';
 
 const API = 'https://api.telegram.org';
 const TIMEOUT_MS = 8000;
@@ -68,7 +69,7 @@ const bookingText = (b) => {
     `${b.price_byn} BYN`,
     '',
     `👤 ${escapeHtml(b.client_name)}`,
-    `📞 ${escapeHtml(b.contact)}`,
+    `📞 ${escapeHtml(formatPhone(b.contact))}`,
   ];
   if (b.comment) lines.push(`💬 «${escapeHtml(b.comment)}»`);
   return lines.join('\n');
