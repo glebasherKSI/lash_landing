@@ -62,6 +62,7 @@
     </dl>
   </div>
 
+  <div class="cal-panels" data-cal-panels>
 <% for (const d of cal.days) { %>
   <section class="cal-panel" data-cal-panel="<%= d.iso %>" aria-labelledby="p-<%= d.iso %>"<%~ d.iso === cal.selected ? '' : ' hidden' %>>
     <div class="cal-panel__head">
@@ -84,7 +85,19 @@
 <% } %>
   </section>
 <% } %>
+  </div>
 </div>
+
+<%/* На телефоне выбранный день открывается шторкой: карточки сразу перед глазами, без прокрутки */%>
+<dialog class="admin-dialog cal-day-sheet" id="cal-day-sheet" aria-labelledby="cal-day-sheet-title">
+  <div class="sheet">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="cal-day-sheet-title" data-cal-sheet-title></h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="sheet__body" data-cal-sheet-body></div>
+  </div>
+</dialog>
 <% } else { %>
 <nav class="filters" aria-label="Фильтр записей" data-bookings-filters>
   <div class="segmented segmented--full" role="group" aria-label="Период" data-segmented>

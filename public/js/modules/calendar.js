@@ -13,11 +13,36 @@ export const initCalendar = ({ haptic = () => {} } = {}) => {
   // Уровень загрузки дня — через CSSOM: атрибут style запрещён политикой безопасности
   const paintLoad = () => root.querySelectorAll('[data-load]').forEach((el) => el.style.setProperty('--load', el.dataset.load));
 
+  // Телефон: карточки дня живут в шторке снизу; широкий экран — справа от сетки (как в CSS, от 1100px)
+  const sheet = document.getElementById('cal-day-sheet');
+  const sheetBody = sheet.querySelector('[data-cal-sheet-body]');
+  const sheetTitle = sheet.querySelector('[data-cal-sheet-title]');
+  const phone = matchMedia('(max-width: 1099px)');
+
+  const placePanels = () => {
+    const fresh = root.querySelector('[data-cal-panels]');
+    if (phone.matches) {
+      if (fresh) sheetBody.replaceChildren(fresh);
+    } else {
+      sheet.close();
+      if (fresh) sheetBody.replaceChildren();
+      else root.append(...sheetBody.children);
+    }
+  };
+
   const selectDay = (iso) => {
     root.dataset.selected = iso;
     root.querySelectorAll('[data-cal-day]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.calDay === iso)));
-    root.querySelectorAll('[data-cal-panel]').forEach((p) => (p.hidden = p.dataset.calPanel !== iso));
+    document.querySelectorAll('[data-cal-panel]').forEach((p) => (p.hidden = p.dataset.calPanel !== iso));
     history.replaceState(null, '', pageUrl(root.dataset.month, iso));
+  };
+
+  const openSheet = (iso) => {
+    const panel = document.querySelector(`[data-cal-panel="${iso}"]`);
+    if (!phone.matches || !panel) return;
+    sheetTitle.innerHTML = panel.querySelector('.cal-panel__title').innerHTML;
+    sheetBody.scrollTop = 0;
+    if (!sheet.open) sheet.showModal();
   };
 
   const fetchCalendar = async (href) => {
@@ -36,11 +61,14 @@ export const initCalendar = ({ haptic = () => {} } = {}) => {
       root.innerHTML = next.innerHTML;
       root.dataset.month = next.dataset.month;
       root.dataset.selected = next.dataset.selected;
+      placePanels();
       paintLoad();
-      history.replaceState(null, '', pageUrl(next.dataset.month, next.dataset.selected));
+      history.replaceState(null, '', pageUrl(next.dataset.month, phone.matches ? '' : next.dataset.selected));
       root.style.setProperty('--dir', -direction);
       root.getBoundingClientRect(); // зафиксировать стартовую позицию перед въездом
       root.classList.remove('is-leaving');
+      // нажали на день соседнего месяца — сразу показать его
+      if (new URL(href, location.href).searchParams.has('day')) openSheet(next.dataset.selected);
     } catch (error) {
       if (error.name !== 'AbortError') location.href = href;
     }
@@ -58,12 +86,10 @@ export const initCalendar = ({ haptic = () => {} } = {}) => {
   root.addEventListener('click', (event) => {
     const day = event.target.closest('[data-cal-day]');
     if (day) {
-      if (day.getAttribute('aria-pressed') === 'true') return;
       haptic();
-      selectDay(day.dataset.calDay);
-      // на телефоне день под сеткой: показать его начало, если он ниже экрана
-      const panel = root.querySelector(`[data-cal-panel="${day.dataset.calDay}"]`);
-      if (panel.getBoundingClientRect().top > innerHeight - 120) panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      // повторное нажатие на выбранный день тоже открывает шторку
+      if (day.getAttribute('aria-pressed') !== 'true') selectDay(day.dataset.calDay);
+      openSheet(day.dataset.calDay);
       return;
     }
     const shift = event.target.closest('a[data-cal-shift]');
@@ -88,5 +114,11 @@ export const initCalendar = ({ haptic = () => {} } = {}) => {
   });
 
   document.addEventListener('booking:changed', refreshTop);
+  phone.addEventListener('change', placePanels);
+  // шторку закрыли — день из адреса убираем, чтобы после перезагрузки она не открылась сама
+  sheet.addEventListener('close', () => phone.matches && history.replaceState(null, '', pageUrl(root.dataset.month)));
+  placePanels();
   paintLoad();
+  // день был открыт до перезагрузки (например, после новой записи из шторки) — открыть снова
+  if (new URLSearchParams(location.search).has('day')) openSheet(root.dataset.selected);
 };

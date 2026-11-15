@@ -1041,3 +1041,16 @@
   .cal-panel { grid-column: 2; grid-row: 1; }
   .cal-panel .booking-list { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Телефон: выбранный день — в шторке снизу (панели переносит calendar.js; до загрузки скрипта не мелькают) */
+@media (max-width: 1099px) {
+  .cal > .cal-panels { display: none; }
+}
+.cal-day-sheet .sheet__body { gap: 10px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+.cal-day-sheet .sheet__title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.cal-day-sheet .sheet__title .tag { font-size: 13px; min-height: 26px; padding: 0 10px; }
+.cal-day-sheet .cal-panel__head { padding: 0 0 2px; }
+.cal-day-sheet .cal-panel__title { display: none; }
+.cal-day-sheet .cal-panel { animation: none; }
+.cal-day-sheet .booking-card { background: var(--card); }
+.cal-day-sheet .booking-card.status-new { background: #FCF5F6; }
