@@ -173,7 +173,7 @@ const renderRevenue = (card, data) => {
   svg.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && hide());
 
   // Таблица для тех, кому график неудобен
-  card.querySelector('[data-an-table]').innerHTML = `<table><thead><tr><th>Период</th><th>Заработано</th><th>Запланировано</th><th>Записей</th></tr></thead><tbody>
+  card.querySelector('[data-an-table]').innerHTML = `<table><thead><tr><th>Период</th><th>Заработано</th><th>План</th><th>Записей</th></tr></thead><tbody>
     ${buckets.filter((b) => b.count).map((b) => `<tr><td>${escape(b.label)}</td><td>${fmt(b.earned)}</td><td>${fmt(b.planned)}</td><td>${b.count}</td></tr>`).join('') || '<tr><td colspan="4">Записей нет</td></tr>'}
   </tbody></table>`;
 };
