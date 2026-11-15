@@ -14,6 +14,7 @@ import { scheduleRouter } from './schedule.js';
 import { settingsRouter } from './settings.js';
 import { effectsRouter } from './effects.js';
 import { integrationsRouter } from './integrations.js';
+import { analyticsRouter } from './analytics.js';
 
 export const adminRouter = Router();
 
@@ -94,3 +95,4 @@ adminRouter.use(scheduleRouter);
 adminRouter.use(settingsRouter);
 adminRouter.use(effectsRouter);
 adminRouter.use(integrationsRouter);
+adminRouter.use(analyticsRouter);

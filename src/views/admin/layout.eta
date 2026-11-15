@@ -21,11 +21,12 @@
   // Основные разделы: в нижней панели на телефоне и в боковом меню на компьютере
   const tabs = [
     ['/admin/bookings', 'Записи', 'i-calendar'],
+    ['/admin/analytics', 'Аналитика', 'i-chart'],
     ['/admin/services', 'Услуги', 'i-lash'],
-    ['/admin/works', 'Работы', 'i-image'],
     ['/admin/schedule', 'Расписание', 'i-clock'],
   ];
   const extra = [
+    ['/admin/works', 'Работы', 'i-image'],
     ['/admin/effects', 'Эффекты', 'i-sparkle'],
     ['/admin/settings', 'Настройки', 'i-gear'],
   ];

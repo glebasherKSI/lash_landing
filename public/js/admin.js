@@ -666,9 +666,12 @@ if (bookingFilters) {
     thumb.style.width = `${active.offsetWidth}px`;
     thumb.style.transform = `translateX(${active.offsetLeft - 4}px)`;
   };
-  moveThumb();
   segmented.classList.add('has-thumb');
-  window.addEventListener('resize', moveThumb);
+  // Замер при загрузке может прийтись на недогруженный шрифт или анимацию появления (iPhone):
+  // пересчитываем при любом изменении размеров вкладок и после загрузки шрифтов
+  const thumbObserver = new ResizeObserver(moveThumb);
+  segmented.querySelectorAll('a').forEach((a) => thumbObserver.observe(a));
+  document.fonts?.ready.then(moveThumb);
 
   const setCurrent = (group, link) => group.querySelectorAll('a').forEach((a) => a.setAttribute('aria-current', String(a === link)));
 
@@ -882,3 +885,7 @@ if (quickForm) {
     sync();
   });
 }
+
+/* ---------- Аналитика: модуль грузится только на её странице ---------- */
+
+if (document.querySelector('[data-analytics]')) import('./modules/analytics.js').then((m) => m.initAnalytics());

@@ -1,0 +1,85 @@
+<% layout('./layout') %>
+<header class="page-head">
+  <h1 class="page-title">Аналитика</h1>
+</header>
+
+<div class="an-controls">
+  <div class="segmented segmented--full an-range" role="group" aria-label="Период" data-an-range>
+    <span class="segmented__thumb" aria-hidden="true"></span>
+<% for (const [value, label] of [['week', 'Неделя'], ['month', 'Месяц'], ['quarter', 'Квартал'], ['year', 'Год']]) { %>
+    <button type="button" class="segmented__item" data-range="<%= value %>" aria-current="<%= value === it.initial.range %>"><%= label %></button>
+<% } %>
+  </div>
+  <div class="an-nav">
+    <button type="button" class="icon-btn icon-btn--plain" data-an-shift="-1" aria-label="Предыдущий период"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+    <h2 class="an-nav__title" data-an-title aria-live="polite"><%= it.initial.period.label %></h2>
+    <button type="button" class="icon-btn icon-btn--plain" data-an-shift="1" aria-label="Следующий период"><svg aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+  </div>
+</div>
+
+<div class="an" data-analytics data-max-offset="<%= it.maxOffset %>">
+  <section class="an-kpis" aria-label="Итоги периода">
+    <article class="an-kpi an-kpi--hero">
+      <p class="an-kpi__label">Выручка</p>
+      <p class="an-kpi__value"><span data-kpi="revenue">0</span> <small>BYN</small></p>
+      <p class="an-kpi__delta" data-delta="revenue"></p>
+      <p class="an-kpi__sub" data-kpi-sub="revenue"></p>
+    </article>
+    <article class="an-kpi">
+      <p class="an-kpi__label">Записей</p>
+      <p class="an-kpi__value"><span data-kpi="count">0</span></p>
+      <p class="an-kpi__delta" data-delta="count"></p>
+    </article>
+    <article class="an-kpi">
+      <p class="an-kpi__label">Средний чек</p>
+      <p class="an-kpi__value"><span data-kpi="average">0</span> <small>BYN</small></p>
+      <p class="an-kpi__delta" data-delta="average"></p>
+    </article>
+    <article class="an-kpi">
+      <p class="an-kpi__label">Отмены</p>
+      <p class="an-kpi__value"><span data-kpi="cancelRate">0</span><small>%</small></p>
+      <p class="an-kpi__delta" data-delta="cancelRate"></p>
+      <p class="an-kpi__sub" data-kpi-sub="cancelled"></p>
+    </article>
+  </section>
+
+  <section class="panel an-card an-card--wide" aria-labelledby="an-revenue-title">
+    <div class="an-card__head">
+      <h2 class="an-card__title" id="an-revenue-title">Выручка по <span data-an-bucket-name>дням</span></h2>
+      <ul class="an-legend" data-an-legend>
+        <li><span class="an-swatch an-swatch--earned" aria-hidden="true"></span>Заработано</li>
+        <li data-legend-planned><span class="an-swatch an-swatch--planned" aria-hidden="true"></span>Запланировано</li>
+      </ul>
+    </div>
+    <div class="an-chart" data-chart="revenue">
+      <div class="an-tooltip" data-an-tooltip hidden></div>
+    </div>
+    <details class="an-table">
+      <summary>Показать таблицей</summary>
+      <div class="an-table__scroll" data-an-table></div>
+    </details>
+  </section>
+
+  <section class="panel an-card" aria-labelledby="an-source-title">
+    <h2 class="an-card__title" id="an-source-title">Откуда записи</h2>
+    <div data-chart="source"></div>
+  </section>
+
+  <section class="panel an-card" aria-labelledby="an-clients-title">
+    <h2 class="an-card__title" id="an-clients-title">Клиентки</h2>
+    <div data-chart="clients"></div>
+  </section>
+
+  <section class="panel an-card" aria-labelledby="an-services-title">
+    <h2 class="an-card__title" id="an-services-title">Популярные услуги</h2>
+    <ol class="an-meters" data-chart="services"></ol>
+  </section>
+
+  <section class="panel an-card" aria-labelledby="an-weekdays-title">
+    <h2 class="an-card__title" id="an-weekdays-title">Загрузка по дням недели</h2>
+    <p class="muted an-card__hint">Нажмите на столбик, чтобы увидеть число записей</p>
+    <div class="an-weekdays" data-chart="weekdays"></div>
+  </section>
+</div>
+
+<script type="application/json" id="analytics-data"><%~ JSON.stringify(it.initial).replace(/</g, '\\u003c') %></script>
