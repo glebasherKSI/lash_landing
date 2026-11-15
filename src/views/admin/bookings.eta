@@ -120,7 +120,7 @@
         <legend class="quick__label">Клиентка</legend>
         <div class="quick-client-actions">
           <button type="button" class="btn btn--ghost btn--sm" data-quick-contacts hidden><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Из контактов</button>
-          <button type="button" class="btn btn--ghost btn--sm" data-quick-paste hidden>Вставить из переписки</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-open-dialog="client-picker"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Выбрать из базы</button>
         </div>
         <div class="form-grid">
           <div class="field">
@@ -171,4 +171,18 @@
       <button type="submit" class="btn btn--dark" data-quick-submit disabled>Записать</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="admin-dialog client-picker" id="client-picker" aria-labelledby="client-picker-title">
+  <div class="sheet">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="client-picker-title">Клиентки</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="sheet__body">
+      <input type="search" class="clients-search" placeholder="Имя или номер" aria-label="Поиск клиентки" autocomplete="off" data-picker-search>
+      <ul class="client-suggest" data-picker-list aria-label="Клиентки"></ul>
+      <p class="muted client-picker__empty" data-picker-empty hidden>Никого не нашлось</p>
+    </div>
+  </div>
 </dialog>

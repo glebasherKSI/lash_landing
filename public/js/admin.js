@@ -142,6 +142,12 @@ document.addEventListener('submit', async (event) => {
   submit?.setAttribute('disabled', '');
   try {
     const result = await post(form.action, new URLSearchParams(new FormData(form)));
+    // сервер просит подтвердить (например, объединение клиенток) — повторяем с merge=1
+    if (!result.ok && result.confirm && form.elements.merge) {
+      if (!(await confirmAction(result.confirm, result.confirmOk))) return;
+      form.elements.merge.value = '1';
+      return form.requestSubmit();
+    }
     if (!result.ok) {
       showFormErrors(form, result.errors);
       const formError = form.querySelector('[data-form-error]');
@@ -151,6 +157,7 @@ document.addEventListener('submit', async (event) => {
     }
     form.dispatchEvent(new CustomEvent('api:success', { detail: result }));
     if (form.hasAttribute('data-reset')) form.reset();
+    if (result.redirect) return redirectWithFlash(result.redirect, result.message);
     if (form.hasAttribute('data-reload') || result.reload) return reloadWithFlash(result.message);
     toast(result.message || 'Сохранено');
     closeSheet(form.closest('dialog'));
@@ -858,33 +865,37 @@ if (quickForm) {
   let clients = null;
 
   const hideSuggest = () => (suggest.hidden = true);
+  const loadClients = async () =>
+    (clients ??= await fetch('/admin/api/clients').then((r) => r.json()).then((r) => r.clients).catch(() => []));
+  // имя — по вхождению, номер — по цифрам без кода страны
+  const matchClient = (c, name, digits) => (!name || c.name.toLowerCase().includes(name)) && (!digits || c.contact.slice(4).includes(digits));
+
+  const clientItem = (c, onPick) => {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'client-suggest__item';
+    const visits = c.visits === 1 ? '1 визит' : c.visits < 5 ? `${c.visits} визита` : `${c.visits} визитов`;
+    button.append(
+      Object.assign(document.createElement('span'), { className: 'client-suggest__name', textContent: c.name }),
+      Object.assign(document.createElement('span'), { className: 'client-suggest__meta', textContent: `${formatPhone(c.contact)} · ${visits}` }),
+    );
+    button.addEventListener('click', onPick);
+    li.append(button);
+    return li;
+  };
 
   const showSuggest = async () => {
-    clients ??= await fetch('/admin/api/clients').then((r) => r.json()).then((r) => r.clients).catch(() => []);
+    await loadClients();
     const name = nameInput.value.trim().toLowerCase();
     const digits = phoneDigits(contactInput.value);
     // пустые поля — последние клиентки; иначе совпадение по имени или по цифрам номера
     const found = clients
-      .filter((c) => (!name || c.name.toLowerCase().includes(name)) && (!digits || c.contact.slice(4).includes(digits)))
+      .filter((c) => matchClient(c, name, digits))
       .slice(0, SUGGEST_LIMIT);
     const exact = found.length === 1 && found[0].name === nameInput.value.trim() && normalizePhone(contactInput.value) === found[0].contact;
     if (!found.length || exact) return hideSuggest();
-    suggest.replaceChildren(
-      ...found.map((c) => {
-        const li = document.createElement('li');
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'client-suggest__item';
-        const visits = c.visits === 1 ? '1 визит' : c.visits < 5 ? `${c.visits} визита` : `${c.visits} визитов`;
-        button.append(
-          Object.assign(document.createElement('span'), { className: 'client-suggest__name', textContent: c.name }),
-          Object.assign(document.createElement('span'), { className: 'client-suggest__meta', textContent: `${formatPhone(c.contact)} · ${visits}` }),
-        );
-        button.addEventListener('click', () => fillContact({ name: c.name, contact: c.contact }));
-        li.append(button);
-        return li;
-      }),
-    );
+    suggest.replaceChildren(...found.map((c) => clientItem(c, () => fillContact(c))));
     suggest.hidden = false;
   };
 
@@ -898,19 +909,35 @@ if (quickForm) {
     if (![nameInput, contactInput].includes(document.activeElement)) hideSuggest();
   }, 0));
 
-  const pasteButton = quickForm.querySelector('[data-quick-paste]');
-  if (navigator.clipboard?.readText) {
-    pasteButton.hidden = false;
-    pasteButton.addEventListener('click', async () => {
-      try {
-        const parsed = parseContact(await navigator.clipboard.readText());
-        if (!parsed.name && !parsed.contact) return toast('В буфере нет имени или телефона', 'error');
-        fillContact(parsed);
-      } catch {
-        toast('Нет доступа к буферу. Вставьте текст в поле вручную', 'error');
-      }
-    });
-  }
+  /* «Выбрать из базы»: шторка с поиском поверх формы */
+  const picker = document.getElementById('client-picker');
+  const pickerSearch = picker.querySelector('[data-picker-search]');
+  const pickerList = picker.querySelector('[data-picker-list]');
+  const pickerEmpty = picker.querySelector('[data-picker-empty]');
+  const PICKER_LIMIT = 50;
+
+  const renderPicker = () => {
+    const query = pickerSearch.value.trim().toLowerCase();
+    // в запросе есть цифры — ищем по номеру, иначе по имени
+    const digits = /\d/.test(query) ? phoneDigits(query) : '';
+    const found = clients.filter((c) => matchClient(c, digits ? '' : query, digits)).slice(0, PICKER_LIMIT);
+    pickerList.replaceChildren(
+      ...found.map((c) =>
+        clientItem(c, () => {
+          fillContact(c);
+          closeSheet(picker);
+        }),
+      ),
+    );
+    pickerEmpty.hidden = found.length > 0;
+  };
+
+  quickForm.querySelector('[data-open-dialog="client-picker"]').addEventListener('click', async () => {
+    pickerSearch.value = '';
+    await loadClients();
+    renderPicker();
+  });
+  pickerSearch.addEventListener('input', renderPicker);
 
   // Выбор из записной книжки — Chrome на Android (на iPhone браузер такого не умеет)
   const contactsButton = quickForm.querySelector('[data-quick-contacts]');
@@ -944,3 +971,24 @@ if (quickForm) {
 
 if (document.querySelector('[data-analytics]')) import('./modules/analytics.js').then((m) => m.initAnalytics());
 if (document.querySelector('[data-story]')) import('./modules/story.js').then((m) => m.initStory());
+
+/* ---------- Клиенты: поиск по списку и маска номера в карточке ---------- */
+
+const clientSearch = document.querySelector('[data-client-search]');
+if (clientSearch) {
+  const rows = [...document.querySelectorAll('[data-client-list] > li')];
+  const empty = document.querySelector('[data-client-empty]');
+  clientSearch.addEventListener('input', () => {
+    const query = clientSearch.value.trim().toLowerCase();
+    const digits = query.replace(/\D/g, '');
+    let shown = 0;
+    for (const row of rows) {
+      // цифры — в номере без кода страны (data-phone), иначе по имени
+      const match = digits ? row.dataset.phone.includes(phoneDigits(digits) || digits) : row.dataset.name.includes(query);
+      row.hidden = !match;
+      shown += match;
+    }
+    empty.hidden = shown > 0;
+  });
+}
+document.querySelectorAll('form[action="/admin/api/client"] [data-phone]').forEach(attachPhoneMask);

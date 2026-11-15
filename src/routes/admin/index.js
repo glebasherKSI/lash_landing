@@ -16,6 +16,7 @@ import { effectsRouter } from './effects.js';
 import { integrationsRouter } from './integrations.js';
 import { analyticsRouter } from './analytics.js';
 import { storyRouter } from './story.js';
+import { clientsRouter } from './clients.js';
 
 export const adminRouter = Router();
 
@@ -98,3 +99,4 @@ adminRouter.use(effectsRouter);
 adminRouter.use(integrationsRouter);
 adminRouter.use(analyticsRouter);
 adminRouter.use(storyRouter);
+adminRouter.use(clientsRouter);

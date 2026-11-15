@@ -220,3 +220,11 @@ export const metrikaSettingsSchema = z.object({
     .refine((v) => v === '' || /^\d{5,12}$/.test(v), 'Номер счётчика — только цифры, например 98765432'),
   metrika_webvisor: checkbox,
 });
+
+/** Правка клиентки: имя и номер меняются во всех её записях. */
+export const clientUpdateSchema = z.object({
+  old_contact: z.string().min(1).max(40),
+  client_name: trimmed(60).min(1, 'Введите имя'),
+  contact: contactSchema,
+  merge: checkbox,
+});

@@ -918,3 +918,39 @@
   .client-suggest:not([hidden]) { animation: rise .2s cubic-bezier(.2, .8, .2, 1); }
 }
 .quick-times > p { grid-column: 1 / -1; }
+
+/* ============ Клиенты ============ */
+.clients-filters { display: grid; gap: 10px; }
+.clients-search {
+  width: 100%; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 0; background: var(--surface);
+  font: inherit; color: inherit; -webkit-appearance: none; appearance: none;
+}
+.clients-search:focus-visible { outline: 2px solid var(--text); outline-offset: 0; }
+.clients-list > li[hidden], .clients-empty[hidden] { display: none; }
+.client-row { color: inherit; text-decoration: none; transition: transform .15s, background-color .15s; }
+.client-row:active { transform: scale(.98); }
+.client-row__go { flex: none; width: 18px; height: 18px; color: var(--muted); }
+.clients-empty { padding: 24px; text-align: center; }
+.tag--warn { background: #F8E1D4; color: #8A3B12; }
+.client-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.client-stat { display: grid; gap: 4px; padding: 14px 16px; border-radius: 20px; background: var(--surface); min-width: 0; }
+.client-stat--hero { background: var(--accent); }
+.client-stat--wide { grid-column: 1 / -1; }
+.client-stat__label { font-size: 14px; color: var(--muted); }
+.client-stat--hero .client-stat__label { color: inherit; opacity: .7; }
+.client-stat__value { font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.client-stat--hero .client-stat__value { font-size: 28px; }
+.client-stat__value small { font-size: 15px; }
+.client-warn { color: #8A3B12; }
+.client-history { display: grid; gap: 6px; }
+.client-visit { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--card); }
+.client-visit.status-cancelled { opacity: .55; }
+.client-visit__main { display: grid; gap: 2px; min-width: 0; }
+.client-visit__date { font-weight: 500; }
+@media (min-width: 720px) { .client-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Выбор клиентки из базы в быстрой записи */
+.client-picker .sheet__body { gap: 10px; }
+.client-picker .client-suggest { box-shadow: none; padding: 0; margin: 0; }
+.client-picker__empty { padding: 20px; text-align: center; }

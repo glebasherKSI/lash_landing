@@ -57,3 +57,30 @@ const selectClients = db.prepare(
 );
 
 export const listClients = () => selectClients.all();
+
+/* ---------- Клиентки (раздел «Клиенты»): отдельной таблицы нет, клиентка — это номер в записях ---------- */
+
+// Статистика по каждому номеру; визит — неотменённая запись не позже сегодняшнего дня
+const selectClientStats = db.prepare(
+  `SELECT contact,
+     client_name AS name,
+     SUM(status != 'cancelled' AND date <= @today) AS visits,
+     SUM(status != 'cancelled' AND date > @today) AS upcoming,
+     SUM(status = 'cancelled') AS cancelled,
+     SUM(CASE WHEN status != 'cancelled' AND date <= @today THEN price_byn ELSE 0 END) AS spent,
+     MIN(CASE WHEN status != 'cancelled' THEN date END) AS first,
+     MAX(CASE WHEN status != 'cancelled' AND date <= @today THEN date END) AS last,
+     MIN(CASE WHEN status != 'cancelled' AND date > @today THEN date END) AS next,
+     MAX(created_at) AS touched
+   FROM bookings GROUP BY contact ORDER BY touched DESC`,
+);
+
+export const listClientStats = (today) => selectClientStats.all({ today });
+
+export const listClientBookings = (contact) =>
+  db.prepare('SELECT * FROM bookings WHERE contact = ? ORDER BY date DESC, start_min DESC').all(contact);
+
+/** Новые имя и номер — во всех записях клиентки. Если номер уже чей-то, записи объединяются. */
+export const updateClient = db.transaction((oldContact, { name, contact }) =>
+  db.prepare('UPDATE bookings SET client_name = ?, contact = ? WHERE contact = ? OR contact = ?').run(name, contact, oldContact, contact).changes,
+);

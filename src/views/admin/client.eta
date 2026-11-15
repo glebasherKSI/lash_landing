@@ -1,0 +1,66 @@
+<% layout('./layout') %>
+<%
+  const s = it.stats;
+  const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
+%>
+<header class="page-head">
+  <a class="icon-btn icon-btn--plain" href="/admin/clients" aria-label="Все клиенты"><svg aria-hidden="true"><use href="#i-chevron-left"/></svg></a>
+  <h1 class="page-title client-title"><%= it.name %></h1>
+<% if (it.valid) { %>
+  <a class="icon-btn" href="tel:<%= it.contact %>" aria-label="Позвонить"><svg aria-hidden="true"><use href="#i-phone"/></svg></a>
+<% } %>
+</header>
+
+<section class="client-stats" aria-label="Статистика">
+  <article class="client-stat client-stat--hero"><p class="client-stat__label">Визитов</p><p class="client-stat__value"><%= s.visits %></p></article>
+  <article class="client-stat client-stat--hero"><p class="client-stat__label">Потратила</p><p class="client-stat__value"><%= s.spent %> <small>BYN</small></p></article>
+  <article class="client-stat"><p class="client-stat__label">Средний чек</p><p class="client-stat__value"><%= s.average ? s.average + ' BYN' : '—' %></p></article>
+  <article class="client-stat"><p class="client-stat__label">Ходит раз в</p><p class="client-stat__value"><%= s.interval ? s.interval + ' ' + plural(s.interval, 'день', 'дня', 'дней') : '—' %></p></article>
+  <article class="client-stat"><p class="client-stat__label">Первый визит</p><p class="client-stat__value"><%= it.firstLabel || '—' %></p></article>
+  <article class="client-stat"><p class="client-stat__label">Отмены</p><p class="client-stat__value"><%= s.cancelled %></p></article>
+<% if (s.favorite) { %>
+  <article class="client-stat client-stat--wide"><p class="client-stat__label">Чаще всего</p><p class="client-stat__value"><%= s.favorite %></p></article>
+<% } %>
+</section>
+
+<form class="panel admin-form" data-api action="/admin/api/client">
+  <div class="panel__bar"><h2 class="h3">Данные</h2></div>
+  <input type="hidden" name="old_contact" value="<%= it.contact %>">
+  <input type="hidden" name="merge">
+<% if (!it.valid) { %>
+  <p class="field-hint client-warn">Номер сохранён с ошибкой: «<%= it.contact %>». Исправьте его — он обновится во всех записях.</p>
+<% } %>
+  <div class="form-grid">
+    <div class="field">
+      <label for="c-name">Имя</label>
+      <input id="c-name" name="client_name" required maxlength="60" value="<%= it.name %>" autocapitalize="words">
+      <p class="field-error" data-error-for="client_name"></p>
+    </div>
+    <div class="field">
+      <label for="c-contact">Телефон</label>
+      <div class="phone-field">
+        <span class="phone-field__code" aria-hidden="true">+375</span>
+        <input id="c-contact" name="contact" required maxlength="14" type="tel" inputmode="numeric" placeholder="(29) 123-45-67" value="<%= it.valid ? it.contact : '' %>" data-phone>
+      </div>
+      <p class="field-error" data-error-for="contact"></p>
+    </div>
+  </div>
+  <p class="field-hint">Имя и номер поменяются во всех записях клиентки<%= s.visits + s.upcoming + s.cancelled > 1 ? ` (${it.history.length})` : '' %>.</p>
+  <p class="form-error" data-form-error role="alert"></p>
+  <div><button type="submit" class="btn btn--dark">Сохранить</button></div>
+</form>
+
+<section class="panel">
+  <div class="panel__bar"><h2 class="h3">История</h2></div>
+  <ul class="client-history">
+<% for (const b of it.history) { %>
+    <li class="client-visit status-<%= b.status %>">
+      <span class="client-visit__main">
+        <span class="client-visit__date"><%= b.dateLabel %>, <%= b.time %></span>
+        <span class="list-row__meta"><%= b.service_title %><%= b.effect_name ? ' · ' + b.effect_name : '' %> · <%= b.price_byn %> BYN<%= b.source === 'site' ? ' · с сайта' : '' %></span>
+      </span>
+      <span class="status-pill"><%= b.future && b.status !== 'cancelled' ? 'Впереди' : b.statusLabel %></span>
+    </li>
+<% } %>
+  </ul>
+</section>

@@ -32,4 +32,5 @@
   <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4.5 19.5h15M7 16v-4M11 16V8M15 16v-6M19 16V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-story" viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9.5 8h5M9.5 11h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9.5" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 19.5c.6-3.2 3-5 6-5s5.4 1.8 6 5M15.5 5.3a3.5 3.5 0 0 1 0 6.4M17.5 14.8c1.6.7 2.7 2.4 3 4.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
 </svg>

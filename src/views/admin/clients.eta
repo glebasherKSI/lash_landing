@@ -1,0 +1,44 @@
+<% layout('./layout') %>
+<%
+  const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
+%>
+<header class="page-head">
+  <h1 class="page-title">Клиенты</h1>
+  <span class="muted"><%= it.clients.length %></span>
+</header>
+
+<% if (!it.clients.length) { %>
+<div class="panel empty-state">
+  <span class="empty-state__icon" aria-hidden="true"><svg><use href="#i-users"/></svg></span>
+  <p class="empty-state__title">Клиенток пока нет</p>
+  <p class="muted">Они появятся здесь после первых записей — с сайта или добавленных вручную.</p>
+</div>
+<% } else { %>
+<div class="filters clients-filters">
+  <input type="search" class="clients-search" placeholder="Имя или номер" aria-label="Поиск клиентки" autocomplete="off" data-client-search>
+  <div class="segmented segmented--full" role="group" aria-label="Сортировка">
+<% for (const s of it.sorts) { %>
+    <a class="segmented__item" href="?sort=<%= s.value %>"<%~ s.value === it.sort ? ' aria-current="true"' : '' %>><%= s.label %></a>
+<% } %>
+  </div>
+</div>
+
+<ul class="sort-list clients-list" data-client-list>
+<% for (const c of it.clients) { %>
+  <li data-name="<%= c.name.toLowerCase() %>" data-phone="<%= c.contact.replace(/^\+375/, '').replace(/\D/g, '') %>">
+    <a class="list-row client-row" href="<%= c.url %>">
+      <span class="list-row__text">
+        <span class="list-row__title"><%= c.name %>
+<% if (!c.valid) { %><span class="tag tag--warn">номер с ошибкой</span><% } %>
+<% if (c.upcoming) { %><span class="tag tag--accent">запись <%= c.nextLabel %></span><% } %>
+        </span>
+        <span class="list-row__meta"><%= c.phone %></span>
+        <span class="list-row__meta"><b><%= c.visits %></b> <%= plural(c.visits, 'визит', 'визита', 'визитов') %> · <b><%= c.spent %></b> BYN<%= c.lastLabel ? ' · была ' + c.lastLabel : '' %></span>
+      </span>
+      <svg class="icon client-row__go" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+    </a>
+  </li>
+<% } %>
+</ul>
+<p class="muted clients-empty" data-client-empty hidden>Никого не нашлось</p>
+<% } %>
