@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getSecret, getSettings, saveSettings } from '../../db/repos/settings.js';
 import { findChats, sendTestMessage, TelegramError } from '../../lib/telegram.js';
-import { metrikaSettingsSchema, telegramSettingsSchema, telegramTestSchema } from '../../validation/schemas.js';
+import { metrikaSettingsSchema, searchVerificationSchema, telegramSettingsSchema, telegramTestSchema } from '../../validation/schemas.js';
 import { action } from './helpers.js';
 
 export const integrationsRouter = Router();
@@ -73,6 +73,14 @@ integrationsRouter.post(
       if (error instanceof TelegramError) return fail(res, error.message);
       throw error;
     }
+  }),
+);
+
+integrationsRouter.post(
+  '/api/integrations/search',
+  action(searchVerificationSchema, (data) => {
+    saveSettings(data);
+    return { message: 'Коды подтверждения сохранены' };
   }),
 );
 

@@ -32,6 +32,9 @@ export const SETTINGS_DEFAULTS = {
   // Яндекс Метрика
   metrika_id: '',
   metrika_webvisor: true,
+  // Подтверждение прав в Google Search Console и Яндекс.Вебмастере (meta-тег)
+  google_verification: '',
+  yandex_verification: '',
 };
 
 // Секреты не попадают в getSettings(): этот объект уходит в шаблоны сайта и админки.

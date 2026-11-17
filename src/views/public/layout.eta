@@ -30,6 +30,12 @@
 <% if (it.preloadImage) { %>
   <link rel="preload" as="image" href="<%= it.preloadImage.href %>" imagesrcset="<%= it.preloadImage.srcset %>" imagesizes="<%= it.preloadImage.sizes %>" fetchpriority="high">
 <% } %>
+<% if (it.settings?.google_verification) { %>
+  <meta name="google-site-verification" content="<%= it.settings.google_verification %>">
+<% } %>
+<% if (it.settings?.yandex_verification) { %>
+  <meta name="yandex-verification" content="<%= it.settings.yandex_verification %>">
+<% } %>
 <% if (it.settings?.metrika_id) { %>
   <script src="<%= it.asset('/js/metrika.js') %>" data-id="<%= it.settings.metrika_id %>" data-webvisor="<%= it.settings.metrika_webvisor ? 1 : 0 %>" async></script>
 <% } %>

@@ -51,7 +51,15 @@ const buildServiceTabs = (categories, services) => {
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const buildJsonLd = (settings, workingHours, heroImage) => {
+// «10–75 BYN» по активным услугам — так поиск показывает уровень цен
+const priceRange = (services) => {
+  const prices = services.map((s) => s.price_byn).filter((p) => p > 0);
+  if (!prices.length) return undefined;
+  const [min, max] = [Math.min(...prices), Math.max(...prices)];
+  return min === max ? `${min} BYN` : `${min}–${max} BYN`;
+};
+
+const buildJsonLd = (settings, workingHours, heroImage, services) => {
   return {
     '@context': 'https://schema.org',
     '@type': 'BeautySalon',
@@ -60,7 +68,7 @@ const buildJsonLd = (settings, workingHours, heroImage) => {
     url: config.SITE_URL,
     telephone: settings.phone || undefined,
     image: heroImage ? new URL(heroImage, config.SITE_URL).href : undefined,
-    priceRange: 'BYN',
+    priceRange: priceRange(services),
     address: {
       '@type': 'PostalAddress',
       streetAddress: settings.address,
@@ -124,7 +132,7 @@ publicRouter.get('/', (_req, res) => {
     reviews: listReviews({ activeOnly: true }),
     hours: groupWorkingHours(workingHours),
     nearest: nearestLabel(findNearestWindow(settings)),
-    jsonLd: buildJsonLd(settings, workingHours, heroWork?.src),
+    jsonLd: buildJsonLd(settings, workingHours, heroWork?.src, services),
     siteUrl: config.SITE_URL,
     formatDuration,
     telegramUrl: telegramUrl(settings.telegram),

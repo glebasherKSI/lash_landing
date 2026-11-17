@@ -221,6 +221,19 @@ export const metrikaSettingsSchema = z.object({
   metrika_webvisor: checkbox,
 });
 
+// Принимает и сам код, и весь meta-тег, который выдают Google и Яндекс
+const verificationCode = (service) =>
+  z
+    .string()
+    .trim()
+    .transform((v) => v.match(/content=["']([^"']+)["']/)?.[1] ?? v)
+    .refine((v) => v === '' || /^[\w-]{8,128}$/.test(v), `Вставьте код из ${service} или весь meta-тег целиком`);
+
+export const searchVerificationSchema = z.object({
+  google_verification: verificationCode('Google Search Console'),
+  yandex_verification: verificationCode('Яндекс.Вебмастера'),
+});
+
 /** Правка клиентки: имя и номер меняются во всех её записях. */
 export const clientUpdateSchema = z.object({
   old_contact: z.string().min(1).max(40),

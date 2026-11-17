@@ -31,6 +31,7 @@ settingsRouter.get('/settings', (_req, res) => {
     mapUrl: mapUrl(settings),
     tokenMask: maskToken(getSecret('telegram_bot_token')),
     siteHost: new URL(config.SITE_URL).host,
+    siteUrl: config.SITE_URL,
     whyItems: pad(settings.why_items, 4),
     visitSteps: pad(settings.visit_steps, 3),
     rules: pad(settings.rules, 4),

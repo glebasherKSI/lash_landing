@@ -173,6 +173,36 @@
         </div>
       </form>
     </details>
+
+<% const searchOn = [s.google_verification && 'Google', s.yandex_verification && 'Яндекс'].filter(Boolean); %>
+    <details class="panel acc"<%~ !searchOn.length ? ' open' : '' %>>
+      <summary class="acc__head">
+        <span class="acc__title">Поиск Google и Яндекс <span class="tag<%= searchOn.length ? ' tag--accent' : '' %>"><%= searchOn.length ? 'подтверждено: ' + searchOn.join(', ') : 'не подключено' %></span></span>
+        <span class="acc__meta">Чтобы сайт появился в поиске</span>
+        <svg class="acc__chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </summary>
+      <form class="admin-form acc__body" data-api action="/admin/api/integrations/search" data-reload>
+        <ol class="steps-hint">
+          <li>Google: откройте <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Search Console</a> → «Добавить ресурс» → «Префикс URL» → <b><%= it.siteUrl %></b> → способ «Тег HTML». Скопируйте тег, вставьте ниже и сохраните, затем нажмите «Подтвердить» в Google.</li>
+          <li>Яндекс: откройте <a href="https://webmaster.yandex.ru/sites/add/" target="_blank" rel="noopener">Вебмастер</a>, добавьте <b><%= it.siteUrl %></b>, способ «Мета-тег» — так же скопируйте и вставьте.</li>
+          <li>После подтверждения отправьте в обоих сервисах карту сайта: <b><%= it.siteUrl %>/sitemap.xml</b>.</li>
+        </ol>
+        <div class="field">
+          <label for="gsc-code">Код Google Search Console</label>
+          <input id="gsc-code" name="google_verification" value="<%= s.google_verification %>" placeholder="&lt;meta name=&quot;google-site-verification&quot; content=&quot;…&quot;&gt;" autocomplete="off" spellcheck="false">
+          <p class="field-error" data-error-for="google_verification"></p>
+        </div>
+        <div class="field">
+          <label for="ywm-code">Код Яндекс.Вебмастера</label>
+          <input id="ywm-code" name="yandex_verification" value="<%= s.yandex_verification %>" placeholder="&lt;meta name=&quot;yandex-verification&quot; content=&quot;…&quot;&gt;" autocomplete="off" spellcheck="false">
+          <p class="field-error" data-error-for="yandex_verification"></p>
+        </div>
+        <p class="form-error" data-form-error role="alert"></p>
+        <div class="form-actions">
+          <button class="btn btn--dark" type="submit">Сохранить</button>
+        </div>
+      </form>
+    </details>
   </div>
 </section>
 
