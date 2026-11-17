@@ -45,5 +45,5 @@ storyRouter.get('/api/story', (req, res) => {
     return { date, working, weekday: WEEKDAYS[weekdayOf(date)], label: d.label, day: d.day, month: d.month, times: windows.map((w) => formatTime(w.start)) };
   });
 
-  res.json({ ok: true, from, to: addDays(from, days - 1), step: stepMin, days: list });
+  res.json({ ok: true, from, to: addDays(from, days - 1), days: list });
 });

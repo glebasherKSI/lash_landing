@@ -13,8 +13,8 @@ const DAYS_BOTTOM = 1440;
 export const STICKER_ZONE = { x: 190, y: 1536, w: 700, h: 200 };
 const HINT_Y = 1500;
 const FOOTER_Y = 1800;
-const CHIP_GAP = 12;
-const LINE_GAP = 12;
+const CHIP_GAP = 10;
+const LINE_GAP = 10;
 const DAY_GAP = { min: 18, max: 64 };
 // Размер окон подбирается под их количество: от крупных до компактных, пока всё не влезет
 // label — размер даты слева: при немногих окнах всё крупнее, без пустоты на картинке
@@ -25,13 +25,15 @@ const SIZES = [
   { font: 38, h: 76, min: 136, label: 36 },
   { font: 34, h: 68, min: 122, label: 34 },
   { font: 31, h: 60, min: 110, label: 32 },
-  { font: 28, h: 54, min: 100, label: 30 },
+  { font: 28, h: 54, min: 96, label: 30 },
+  { font: 26, h: 50, min: 88, label: 28 },
+  { font: 24, h: 46, min: 80, label: 27 },
 ];
 // ширина колонки с датой под самую длинную «30 сентября»
 const labelWidth = (size) => Math.round(size.label * 6.6);
-const MIN_SINGLE_FONT = 38;
 
-const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label).width + 44);
+// поля внутри окна — от высоты: в мелком размере ячейки плотнее и в строку их влезает больше
+const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label).width + size.h * 0.5);
 
 /** Окна дня по строкам на ширину картинки; не влезло в maxLines — последнее окно меняется на «+N». */
 export const layoutDay = (ctx, times, size, maxLines = Infinity) => {
@@ -60,37 +62,16 @@ export const layoutDay = (ctx, times, size, maxLines = Infinity) => {
 
 const dayHeight = (lines, size) => lines.length * size.h + (lines.length - 1) * LINE_GAP;
 
-const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
-
-/** «10:00, 11:00, 12:00, 13:00, 15:00» при шаге 60 → «10:00–13:00», «15:00»: подряд от трёх окон — диапазоном. */
-export const compressTimes = (times, step) => {
-  const out = [];
-  for (let i = 0; i < times.length; ) {
-    let j = i;
-    while (j + 1 < times.length && toMinutes(times[j + 1]) - toMinutes(times[j]) === step) j++;
-    if (j - i >= 2) out.push(`${times[i]}–${times[j]}`);
-    else out.push(...times.slice(i, j + 1));
-    i = j + 1;
-  }
-  return out;
-};
-
-/**
- * Самый крупный размер, при котором все дни влезают. Не влезают отдельными окнами —
- * подряд идущие сжимаются в диапазоны; совсем крайний случай — по строке на день и «+N».
- */
-export const planDays = (ctx, rows, step) => {
+/** Самый крупный размер, при котором все дни влезают; крайний случай — две строки на день и «+N». */
+export const planDays = (ctx, rows) => {
   const avail = DAYS_BOTTOM - DAYS_TOP;
   const fits = (plans, size) => plans.reduce((sum, p) => sum + dayHeight(p.lines, size), 0) + DAY_GAP.min * (plans.length - 1) <= avail;
-  for (const ranges of [false, true]) {
-    // отдельные окна — пока они крупные; мелкая россыпь читается хуже диапазонов
-    for (const size of ranges ? SIZES : SIZES.filter((s) => s.font >= MIN_SINGLE_FONT)) {
-      const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, ranges ? compressTimes(day.times, step) : day.times, size) }));
-      if (fits(plans, size)) return { size, plans, ranges: ranges && plans.some((p) => p.lines.flat().some((c) => c.label.includes('–'))) };
-    }
+  for (const size of SIZES) {
+    const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size) }));
+    if (fits(plans, size)) return { size, plans };
   }
   const size = SIZES.at(-1);
-  return { size, plans: rows.map((day) => ({ day, lines: layoutDay(ctx, compressTimes(day.times, step), size, 1) })), ranges: true };
+  return { size, plans: rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size, 2) })) };
 };
 
 const THEMES = {
@@ -117,7 +98,7 @@ const periodLabel = (days) => {
   return first.month === last.month ? `${first.day}–${last.day} ${last.month}` : `${first.label} – ${last.label}`;
 };
 
-export const drawStory = (canvas, { days, step = 60, theme: themeName, brand, hidden }) => {
+export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => {
   const ctx = canvas.getContext('2d');
   const t = THEMES[themeName];
   const chipBg = t.chip === 'accent' ? brand.accent : t.chip;
@@ -174,14 +155,7 @@ export const drawStory = (canvas, { days, step = 60, theme: themeName, brand, hi
   const visible = rows
     .map((day) => ({ ...day, times: day.times.filter((time) => !hidden.has(`${day.date}|${time}`)) }))
     .filter((day) => day.times.length);
-  const { size, plans, ranges } = planDays(ctx, visible, step);
-  if (ranges) {
-    // что значит диапазон — одной строкой под периодом
-    setFont(ctx, 400, 30);
-    ctx.fillStyle = t.muted;
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(`«10:00–13:00» — начало в любое время, ${step === 60 ? 'каждый час' : `каждые ${step} мин`}`, PAD, 660);
-  }
+  const { size, plans } = planDays(ctx, visible);
   const heights = plans.map((p) => dayHeight(p.lines, size));
   const sumH = heights.reduce((a, b) => a + b, 0);
   const avail = DAYS_BOTTOM - DAYS_TOP;
