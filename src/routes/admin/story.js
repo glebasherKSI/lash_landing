@@ -20,7 +20,6 @@ storyRouter.get('/story', (_req, res) => {
     brand: {
       studio: settings.studio_name,
       master: settings.master_name,
-      place: settings.metro || settings.address || settings.city,
       accent: settings.accent_color,
     },
   });

@@ -7,12 +7,11 @@ const H = 1920;
 const PAD = 88;
 // Зоны Instagram: сверху имя аккаунта, снизу поле ответа — туда ничего важного не ставим
 const CONTENT_TOP = 200;
-const DAYS_TOP = 680;
-const DAYS_BOTTOM = 1440;
+const DAYS_TOP = 590;
+const DAYS_BOTTOM = 1520;
 // Пустое место под стикер «Ссылка» (кнопку записи мастер ставит в Instagram сама)
-export const STICKER_ZONE = { x: 190, y: 1536, w: 700, h: 200 };
-const HINT_Y = 1500;
-const FOOTER_Y = 1800;
+export const STICKER_ZONE = { x: 190, y: 1616, w: 700, h: 180 };
+const HINT_Y = 1580;
 const CHIP_GAP = 10;
 const LINE_GAP = 10;
 const DAY_GAP = { min: 18, max: 64 };
@@ -62,13 +61,22 @@ export const layoutDay = (ctx, times, size, maxLines = Infinity) => {
 
 const dayHeight = (lines, size) => lines.length * size.h + (lines.length - 1) * LINE_GAP;
 
-/** Самый крупный размер, при котором все дни влезают; крайний случай — две строки на день и «+N». */
+// Все дни одной высоты — по самому «многострочному»: ровный ритм строк на картинке
+export const rowHeight = (plans, size) => Math.max(...plans.map((p) => dayHeight(p.lines, size)));
+
+/**
+ * Размер окон: сначала самый крупный, при котором каждый день помещается в одну строку;
+ * не выходит — с переносом; крайний случай — две строки на день и «+N».
+ */
 export const planDays = (ctx, rows) => {
   const avail = DAYS_BOTTOM - DAYS_TOP;
-  const fits = (plans, size) => plans.reduce((sum, p) => sum + dayHeight(p.lines, size), 0) + DAY_GAP.min * (plans.length - 1) <= avail;
-  for (const size of SIZES) {
-    const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size) }));
-    if (fits(plans, size)) return { size, plans };
+  const fits = (plans, size) => rowHeight(plans, size) * plans.length + DAY_GAP.min * (plans.length - 1) <= avail;
+  for (const singleLine of [true, false]) {
+    for (const size of SIZES) {
+      const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size) }));
+      if (singleLine && plans.some((p) => p.lines.length > 1)) continue;
+      if (fits(plans, size)) return { size, plans };
+    }
   }
   const size = SIZES.at(-1);
   return { size, plans: rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size, 2) })) };
@@ -141,14 +149,14 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
 
   // Заголовок, как на первом экране сайта
   ctx.textBaseline = 'alphabetic';
-  setFont(ctx, 300, 132, -2);
-  ctx.fillText('СВОБОДНЫЕ', PAD - 6, 420);
-  ctx.fillText('ОКОШКИ', PAD - 6, 546);
+  setFont(ctx, 300, 100, -1.5);
+  ctx.fillText('СВОБОДНЫЕ', PAD - 4, 384);
+  ctx.fillText('ОКОШКИ', PAD - 4, 480);
   setFont(ctx, 500, 40);
   ctx.fillStyle = t.muted;
   // Период — по дням, которые реально есть на картинке (выходные не показываются)
   const rows = days.filter((d) => d.working);
-  ctx.fillText(periodLabel(rows.length ? rows : days), PAD, 612);
+  ctx.fillText(periodLabel(rows.length ? rows : days), PAD, 538);
 
   // Дни: дата слева, окна справа; блок растягивается на всю высоту между заголовком и ссылкой
   // полностью занятые дни клиенткам ничего не дают — на картинку не попадают
@@ -156,7 +164,8 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
     .map((day) => ({ ...day, times: day.times.filter((time) => !hidden.has(`${day.date}|${time}`)) }))
     .filter((day) => day.times.length);
   const { size, plans } = planDays(ctx, visible);
-  const heights = plans.map((p) => dayHeight(p.lines, size));
+  const rowH = plans.length ? rowHeight(plans, size) : 0;
+  const heights = plans.map(() => rowH);
   const sumH = heights.reduce((a, b) => a + b, 0);
   const avail = DAYS_BOTTOM - DAYS_TOP;
   const gap = plans.length > 1 ? Math.min(DAY_GAP.max, Math.max(DAY_GAP.min, (avail - sumH) / (plans.length - 1))) : 0;
@@ -198,17 +207,12 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
     y += heights[i] + gap;
   });
 
-  // Подсказка над местом для стикера и адрес внизу
+  // Подсказка над местом для стикера
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   setFont(ctx, 500, 34);
   ctx.fillStyle = t.text;
   ctx.fillText('Запись по ссылке ↓', W / 2, HINT_Y);
-  if (brand.place) {
-    setFont(ctx, 400, 30);
-    ctx.fillStyle = t.muted;
-    ctx.fillText(brand.place, W / 2, FOOTER_Y);
-  }
   ctx.textAlign = 'left';
 };
 
