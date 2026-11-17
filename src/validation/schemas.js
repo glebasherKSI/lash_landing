@@ -228,3 +228,11 @@ export const clientUpdateSchema = z.object({
   contact: contactSchema,
   merge: checkbox,
 });
+
+/** Отзыв клиентки с сайта: публикуется только после проверки мастером. */
+export const reviewSubmitSchema = z.object({
+  author: trimmed(60).min(2, 'Как вас зовут?'),
+  rating: z.coerce.number({ message: 'Поставьте оценку' }).int().min(1, 'Поставьте оценку').max(5, 'Поставьте оценку'),
+  text: trimmed(800).min(10, 'Напишите хотя бы пару предложений'),
+  website: z.string().max(0).optional().default(''),
+});

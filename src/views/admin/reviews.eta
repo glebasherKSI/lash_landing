@@ -1,0 +1,99 @@
+<% layout('./layout') %>
+<%
+  const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+%>
+<header class="page-head">
+  <h1 class="page-title">Отзывы</h1>
+  <button type="button" class="btn btn--dark page-action" data-open-dialog="review-dialog" aria-label="Добавить отзыв">
+    <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span class="page-action__label">Добавить отзыв</span>
+  </button>
+</header>
+
+<% if (it.pending.length) { %>
+<section class="moderation" aria-labelledby="pending-title">
+  <div class="section-bar"><h2 class="h3" id="pending-title">На проверке · <%= it.pending.length %></h2></div>
+  <p class="muted moderation__hint">Клиентки оставили их на сайте. На сайте отзыв появится только после публикации.</p>
+  <ul class="moderation__list">
+<% for (const r of it.pending) { %>
+    <li class="panel pending-review" data-row>
+      <div class="pending-review__head">
+        <span class="pending-review__author"><%= r.author %></span>
+        <span class="pending-review__stars" role="img" aria-label="Оценка <%= r.rating %> из 5"><%= stars(r.rating) %></span>
+      </div>
+      <p class="pending-review__text"><%= r.text %></p>
+<% if (r.createdLocal) { %><p class="pending-review__meta">Оставлен <%= r.createdLocal %></p><% } %>
+      <div class="pending-review__actions">
+        <button type="button" class="btn btn--ghost btn--sm btn--danger-text" data-api-post="/admin/api/reviews/<%= r.id %>/delete" data-confirm="Удалить отзыв <%= r.author %>? Он не появится на сайте." data-confirm-ok="Удалить" data-reload>Удалить</button>
+        <button type="button" class="btn btn--dark btn--sm" data-api-post="/admin/api/reviews/<%= r.id %>/publish">Опубликовать</button>
+      </div>
+    </li>
+<% } %>
+  </ul>
+</section>
+<% } %>
+
+<section class="reviews-admin" aria-labelledby="reviews-title">
+  <div class="section-bar">
+    <h2 class="h3" id="reviews-title">На сайте · <%= it.reviews.filter((r) => r.is_active).length %><% if (it.reviews.some((r) => !r.is_active)) { %> <span class="muted">и скрытые</span><% } %></h2>
+  </div>
+<% if (!it.reviews.length) { %>
+  <div class="panel empty-state">
+    <span class="empty-state__icon" aria-hidden="true"><svg><use href="#i-star"/></svg></span>
+    <p class="empty-state__title">Отзывов пока нет</p>
+    <p class="muted">Клиентки могут оставить отзыв на сайте, а вы — добавить его сами кнопкой «+».</p>
+  </div>
+<% } %>
+  <ul class="acc-list" data-sortable="/admin/api/reviews/reorder">
+<% for (const r of it.reviews) { %>
+    <li data-id="<%= r.id %>" data-row>
+      <details class="panel acc">
+        <summary class="acc__head">
+          <span class="acc__title"><%= r.author %> <span class="acc__stars" aria-label="<%= r.rating %> из 5"><%= '★'.repeat(r.rating) %></span><% if (!r.is_active) { %> <span class="tag">скрыт</span><% } %><% if (r.source === 'site') { %> <span class="tag">с сайта</span><% } %></span>
+          <span class="acc__meta acc__meta--clip"><%= r.text %></span>
+          <svg class="acc__chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+        </summary>
+        <form class="admin-form acc__body" data-api action="/admin/api/reviews/<%= r.id %>">
+          <div class="form-grid">
+            <div class="field"><label for="ra-<%= r.id %>">Имя</label><input id="ra-<%= r.id %>" name="author" value="<%= r.author %>" maxlength="60" required></div>
+            <div class="field"><label for="rr-<%= r.id %>">Оценка</label>
+              <select id="rr-<%= r.id %>" name="rating" class="select"><% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"<%~ n === r.rating ? ' selected' : '' %>><%= n %> ★</option><% } %></select>
+            </div>
+            <div class="field field--wide"><label for="rt-<%= r.id %>">Текст отзыва</label><textarea id="rt-<%= r.id %>" name="text" rows="4" maxlength="800" required><%= r.text %></textarea><p class="field-error" data-error-for="text"></p></div>
+            <label class="check-row field--wide"><span>Показывать на сайте</span><span class="switch"><input type="checkbox" name="is_active"<%~ r.is_active ? ' checked' : '' %>></span></label>
+          </div>
+          <div class="form-actions">
+            <span class="move-btns move-btns--always">
+              <button type="button" class="icon-btn icon-btn--plain" data-move="up" aria-label="Выше"><svg aria-hidden="true"><use href="#i-up"/></svg></button>
+              <button type="button" class="icon-btn icon-btn--plain" data-move="down" aria-label="Ниже"><svg aria-hidden="true"><use href="#i-down"/></svg></button>
+            </span>
+            <button type="button" class="icon-btn icon-btn--plain icon-btn--danger" data-api-post="/admin/api/reviews/<%= r.id %>/delete" data-confirm="Удалить отзыв <%= r.author %>?" data-remove-row aria-label="Удалить отзыв"><svg aria-hidden="true"><use href="#i-trash"/></svg></button>
+            <button class="btn btn--dark" type="submit">Сохранить</button>
+          </div>
+        </form>
+      </details>
+    </li>
+<% } %>
+  </ul>
+</section>
+
+<dialog class="admin-dialog" id="review-dialog" aria-labelledby="review-dialog-title">
+  <form class="sheet admin-form" data-api action="/admin/api/reviews" data-reload>
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="review-dialog-title">Новый отзыв</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="sheet__body">
+      <div class="form-grid">
+        <div class="field"><label for="ra-new">Имя клиентки</label><input id="ra-new" name="author" maxlength="60" required><p class="field-error" data-error-for="author"></p></div>
+        <div class="field"><label for="rr-new">Оценка</label><select id="rr-new" name="rating" class="select"><% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"><%= n %> ★</option><% } %></select></div>
+        <div class="field field--wide"><label for="rt-new">Текст отзыва</label><textarea id="rt-new" name="text" rows="5" maxlength="800" required></textarea><p class="field-error" data-error-for="text"></p></div>
+      </div>
+      <input type="hidden" name="is_active" value="on">
+      <p class="form-error" data-form-error role="alert"></p>
+    </div>
+    <div class="sheet__foot">
+      <button type="button" class="btn btn--ghost" data-close-dialog>Отмена</button>
+      <button class="btn btn--dark" type="submit">Добавить</button>
+    </div>
+  </form>
+</dialog>

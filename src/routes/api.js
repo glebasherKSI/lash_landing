@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { getService } from '../db/repos/catalog.js';
+import { getService, submitReview } from '../db/repos/catalog.js';
 import { getSettings } from '../db/repos/settings.js';
 import { BookingError, createBooking, findNearestWindow, getBookingDays, getDaySlots } from '../lib/booking.js';
 import { verifyCsrf } from '../lib/csrf.js';
-import { notifyNewBooking } from '../lib/telegram.js';
+import { notifyNewBooking, notifyNewReview } from '../lib/telegram.js';
 import { formatDateLong, formatTime } from '../lib/time.js';
-import { bookingRequestSchema, fieldErrors, slotsQuerySchema } from '../validation/schemas.js';
+import { bookingRequestSchema, fieldErrors, reviewSubmitSchema, slotsQuerySchema } from '../validation/schemas.js';
 
 export const apiRouter = Router();
 
@@ -16,6 +16,14 @@ const bookingLimiter = rateLimit({
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { ok: false, message: 'Слишком много заявок с вашего устройства. Напишите мастеру напрямую или попробуйте позже.' },
+});
+
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 3,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { ok: false, message: 'Вы уже оставили несколько отзывов. Попробуйте позже.' },
 });
 
 const readLimiter = rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
@@ -86,4 +94,19 @@ apiRouter.post('/bookings', bookingLimiter, verifyCsrf, async (req, res) => {
     }
     throw error;
   }
+});
+
+// Отзыв с сайта сохраняется скрытым: на сайте он появится после проверки в админке
+apiRouter.post('/reviews', reviewLimiter, verifyCsrf, (req, res) => {
+  const parsed = reviewSubmitSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const errors = fieldErrors(parsed.error);
+    // honeypot: отвечаем как будто всё хорошо
+    if (errors.website) return res.status(201).json({ ok: true });
+    return res.status(422).json({ ok: false, message: 'Проверьте поля формы', errors });
+  }
+  const { website: _honeypot, ...review } = parsed.data;
+  const id = submitReview(review);
+  notifyNewReview({ id, ...review });
+  res.status(201).json({ ok: true });
 });

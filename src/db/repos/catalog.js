@@ -105,11 +105,35 @@ export const reorderEffects = reorder('effects');
 
 /* ---------- Отзывы ---------- */
 
+/** Отзывы, прошедшие проверку (на сайте — только включённые). Ожидающие модерации сюда не попадают. */
 export const listReviews = ({ activeOnly = false } = {}) =>
   db
-    .prepare(`SELECT * FROM reviews ${activeOnly ? 'WHERE is_active = 1' : ''} ORDER BY sort, id`)
+    .prepare(`SELECT * FROM reviews WHERE is_pending = 0 ${activeOnly ? 'AND is_active = 1' : ''} ORDER BY sort, id`)
     .all()
     .map((row) => toBool(row, 'is_active'));
+
+export const listPendingReviews = () => db.prepare('SELECT * FROM reviews WHERE is_pending = 1 ORDER BY id DESC').all();
+
+export const countPendingReviews = () => db.prepare('SELECT COUNT(*) FROM reviews WHERE is_pending = 1').pluck().get();
+
+/** Отзыв с сайта: скрыт, пока мастер его не проверит. */
+export const submitReview = ({ author, text, rating }) =>
+  db
+    .prepare(
+      `INSERT INTO reviews (author, text, rating, is_active, is_pending, source, created_at, sort)
+       VALUES (?, ?, ?, 0, 1, 'site', datetime('now'), 0)`,
+    )
+    .run(author, text, rating).lastInsertRowid;
+
+/** Публикация после проверки: свежий отзыв встаёт первым в списке. */
+export const publishReview = (id) =>
+  db
+    .prepare(
+      `UPDATE reviews SET is_active = 1, is_pending = 0,
+         sort = (SELECT COALESCE(MIN(sort), 0) - 1 FROM reviews WHERE is_pending = 0)
+       WHERE id = ? AND is_pending = 1`,
+    )
+    .run(id).changes;
 
 export const createReview = ({ author, text, rating, is_active }) =>
   db

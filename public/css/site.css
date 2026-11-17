@@ -441,6 +441,44 @@ a.glass-tile:hover { background: var(--white); }
 .review blockquote p { color: var(--text); font-size: 18px; line-height: 1.5; }
 .review__author { font-weight: 500; color: var(--muted); }
 
+/* Оставить отзыв: розовая плашка под отзывами, форма раскрывается в ней же */
+.review-write {
+  display: grid; gap: 24px; margin-top: 16px; padding: clamp(24px, 4vw, 40px);
+  border-radius: var(--r-card); background: var(--g-pink);
+}
+.reviews__grid + .review-write { margin-top: 16px; }
+.reviews .h2 + .review-write { margin-top: 0; }
+.review-write__intro { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 32px; }
+.review-write__intro > .btn { margin-left: auto; }
+.review-write__title { font-size: clamp(22px, 2.4vw, 28px); font-weight: 400; letter-spacing: -0.01em; line-height: 1.2; flex: 1 1 100%; }
+.review-write__text { color: #4A4A52; max-width: 34em; flex: 1 1 280px; }
+.review-form { display: grid; gap: 18px; max-width: 640px; }
+.review-form[hidden], .review-done[hidden], .review-write__intro[hidden] { display: none; }
+.review-form .btn { justify-self: start; }
+.review-done { display: grid; gap: 6px; }
+.review-done:focus { outline: none; }
+
+/* Оценка звёздами: обычные радиокнопки, звёзды до выбранной закрашены */
+.rate { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.rate__legend { padding: 0; margin-bottom: 4px; font-weight: 500; }
+.rate__stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
+.rate__stars label {
+  display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; cursor: pointer;
+  color: rgba(19, 19, 21, .18); transition: color .15s, transform .15s var(--ease);
+}
+.rate__stars label svg { width: 34px; height: 34px; }
+.rate__stars input:checked ~ label { color: var(--text); }
+@media (hover: hover) {
+  .rate__stars:hover label { color: rgba(19, 19, 21, .18); }
+  .rate__stars label:hover, .rate__stars label:hover ~ label { color: var(--text); }
+}
+.rate__stars label:active { transform: scale(.9); }
+.rate__stars input:focus-visible + label { box-shadow: var(--focus); }
+@media (max-width: 720px) {
+  .review-write__intro > .btn { margin-left: 0; width: 100%; }
+  .review-form .btn { justify-self: stretch; }
+}
+
 /* ============ 7. Запись ============ */
 .booking__layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
 .booking__steps { display: grid; gap: 16px; min-width: 0; }

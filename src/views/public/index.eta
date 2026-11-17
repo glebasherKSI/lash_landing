@@ -263,9 +263,9 @@
 <% } %>
     </section>
 
-<% if (it.reviews.length) { %>
-    <section class="section reviews" aria-labelledby="reviews-title" data-reveal>
+    <section class="section reviews" id="reviews" aria-labelledby="reviews-title" data-reveal>
       <h2 id="reviews-title" class="h2">Отзывы</h2>
+<% if (it.reviews.length) { %>
       <ul class="reviews__grid">
 <% for (const review of it.reviews) { %>
         <li class="card review">
@@ -277,8 +277,51 @@
         </li>
 <% } %>
       </ul>
-    </section>
 <% } %>
+
+      <div class="review-write" data-review>
+        <div class="review-write__intro" data-review-intro>
+          <p class="review-write__title">Были у меня на процедуре?</p>
+          <p class="review-write__text">Расскажите, как вам результат. Отзыв появится на сайте после проверки.</p>
+          <button type="button" class="btn btn--dark" data-review-open aria-expanded="false" aria-controls="review-form">Оставить отзыв</button>
+        </div>
+
+        <form class="review-form" id="review-form" data-review-form hidden novalidate>
+          <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+          <fieldset class="rate">
+            <legend class="rate__legend">Оценка</legend>
+            <div class="rate__stars">
+<% for (let n = 5; n >= 1; n--) { %>
+              <input class="sr-only" type="radio" name="rating" id="rv-<%= n %>" value="<%= n %>"<%~ n === 5 ? ' checked' : '' %>>
+              <label for="rv-<%= n %>" title="<%= n %> из 5"><svg aria-hidden="true"><use href="#i-star"/></svg><span class="sr-only"><%= n %> из 5</span></label>
+<% } %>
+            </div>
+            <p class="field-error" data-error-for="rating" role="alert"></p>
+          </fieldset>
+          <div class="field">
+            <label for="rv-author">Ваше имя</label>
+            <input id="rv-author" name="author" maxlength="60" autocomplete="given-name" required>
+            <p class="field-error" data-error-for="author" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="rv-text">Отзыв</label>
+            <textarea id="rv-text" name="text" rows="4" maxlength="800" required></textarea>
+            <p class="field-error" data-error-for="text" role="alert"></p>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="rv-website">Сайт</label>
+            <input id="rv-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <p class="form-error" data-form-error role="alert"></p>
+          <button type="submit" class="btn btn--dark" data-review-submit>Отправить отзыв</button>
+        </form>
+
+        <div class="review-done" data-review-done hidden tabindex="-1">
+          <p class="review-write__title">Спасибо за отзыв!</p>
+          <p class="review-write__text">Он появится на сайте, как только я его проверю.</p>
+        </div>
+      </div>
+    </section>
 
     <!-- 7. Онлайн-запись -->
     <%~ include('./booking', it) %>

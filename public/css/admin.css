@@ -1061,3 +1061,21 @@
 /* Пока открыта шторка, страница под ней не прокручивается (иначе на iPhone жест «проваливается» на фон) */
 html:has(dialog[open]), html:has(dialog[open]) body { overflow: hidden; }
 .admin-dialog { overscroll-behavior: contain; }
+
+/* ============ Отзывы: модерация ============ */
+.menu-item__badge {
+  min-width: 24px; height: 24px; padding: 0 7px; margin-left: auto; border-radius: 999px;
+  display: grid; place-items: center; background: var(--accent); color: var(--text); font-size: 14px; font-weight: 600;
+}
+.menu-item__badge + .menu-item__go { margin-left: 8px; }
+.moderation { display: grid; gap: 10px; }
+.moderation__hint { padding: 0 4px; font-size: 15px; margin-top: -4px; }
+.moderation__list { display: grid; gap: 8px; }
+.pending-review { gap: 8px; }
+.pending-review__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pending-review__author { font-size: 17px; font-weight: 500; }
+.pending-review__stars { color: #C84D78; letter-spacing: 1px; white-space: nowrap; }
+.pending-review__text { white-space: pre-line; overflow-wrap: anywhere; }
+.pending-review__meta { font-size: 13px; color: var(--muted); }
+.pending-review__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.pending-review__actions .btn { flex: 1 1 auto; max-width: 200px; }

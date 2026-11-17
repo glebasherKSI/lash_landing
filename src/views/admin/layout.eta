@@ -27,6 +27,7 @@
   ];
   const extra = [
     ['/admin/clients', 'Клиенты', 'i-users'],
+    ['/admin/reviews', 'Отзывы', 'i-star'],
     ['/admin/story', 'Окошки для сторис', 'i-story'],
     ['/admin/works', 'Работы', 'i-image'],
     ['/admin/effects', 'Эффекты', 'i-sparkle'],
@@ -34,6 +35,7 @@
   ];
   const isCurrent = (href) => it.currentPath.startsWith(href);
   const inExtra = extra.some(([href]) => isCurrent(href));
+  const badges = { '/admin/bookings': it.newBookings, '/admin/reviews': it.pendingReviews };
   const initials = (it.studioName || 'OL').split(/\s+/).map((w) => w[0]).join('').slice(0, 2);
 %>
   <div class="admin-shell">
@@ -46,7 +48,7 @@
 <% for (const [href, label, icon] of [...tabs, ...extra]) { %>
         <a href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>>
           <svg class="icon" aria-hidden="true"><use href="#<%= icon %>"/></svg><span><%= label %></span>
-<% if (href === '/admin/bookings' && it.newBookings) { %><span class="badge" aria-label="новых: <%= it.newBookings %>"><%= it.newBookings %></span><% } %>
+<% if (badges[href]) { %><span class="badge" aria-label="новых: <%= badges[href] %>"><%= badges[href] %></span><% } %>
         </a>
 <% } %>
       </nav>
@@ -74,7 +76,9 @@
     </a>
 <% } %>
     <button type="button" class="tabbar__item" data-open-dialog="more-sheet"<%~ inExtra ? ' aria-current="page"' : '' %>>
-      <span class="tabbar__icon"><svg aria-hidden="true"><use href="#i-more"/></svg></span>
+      <span class="tabbar__icon"><svg aria-hidden="true"><use href="#i-more"/></svg>
+<% if (it.pendingReviews) { %><span class="tabbar__badge" aria-label="отзывов на проверке: <%= it.pendingReviews %>"><%= it.pendingReviews %></span><% } %>
+      </span>
       <span class="tabbar__label">Ещё</span>
     </button>
   </nav>
@@ -88,7 +92,7 @@
       <div class="sheet__body">
         <ul class="menu-list">
 <% for (const [href, label, icon] of extra) { %>
-          <li><a class="menu-item" href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>><span class="menu-item__icon"><svg aria-hidden="true"><use href="#<%= icon %>"/></svg></span><%= label %><svg class="menu-item__go" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
+          <li><a class="menu-item" href="<%= href %>"<%~ isCurrent(href) ? ' aria-current="page"' : '' %>><span class="menu-item__icon"><svg aria-hidden="true"><use href="#<%= icon %>"/></svg></span><%= label %><% if (badges[href]) { %><span class="badge menu-item__badge" aria-label="на проверке: <%= badges[href] %>"><%= badges[href] %></span><% } %><svg class="menu-item__go" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
 <% } %>
           <li><a class="menu-item" href="/" target="_blank" rel="noopener"><span class="menu-item__icon"><svg aria-hidden="true"><use href="#i-globe"/></svg></span>Открыть сайт<svg class="menu-item__go" aria-hidden="true"><use href="#i-arrow"/></svg></a></li>
           <li>

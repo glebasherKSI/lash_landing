@@ -110,6 +110,31 @@ export const notifyNewBooking = async (booking) => {
   }
 };
 
+/** Новый отзыв с сайта ждёт проверки. Не бросает ошибок. */
+export const notifyNewReview = async (review) => {
+  const target = getTelegramTarget();
+  if (!target) return;
+  const rows = config.SITE_URL.startsWith('https://') ? [[{ text: 'Проверить отзыв', url: `${config.SITE_URL}/admin/reviews` }]] : [];
+  try {
+    await call(target.token, 'sendMessage', {
+      chat_id: target.chatId,
+      text: [
+        '⭐ <b>Новый отзыв на проверке</b>',
+        '',
+        `${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)} · ${escapeHtml(review.author)}`,
+        `«${escapeHtml(review.text)}»`,
+        '',
+        'На сайте появится после публикации в админке.',
+      ].join('\n'),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      ...(rows.length ? { reply_markup: { inline_keyboard: rows } } : {}),
+    });
+  } catch (error) {
+    console.warn('telegram:', error.message);
+  }
+};
+
 /* ---------- Кнопки статуса: нажатия приходят через getUpdates (сервер опрашивает Telegram сам) ---------- */
 
 const ACTIONS = {

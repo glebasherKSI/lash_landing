@@ -6,6 +6,7 @@ import { ROOT, config } from '../../config.js';
 import { newCsrfToken, setCsrfCookie, verifyCsrf } from '../../lib/csrf.js';
 import { endSession, isAuthenticated, requireAdmin, startSession } from '../../lib/session.js';
 import { countBookingsByStatus } from '../../db/repos/bookings.js';
+import { countPendingReviews } from '../../db/repos/catalog.js';
 import { getSettings } from '../../db/repos/settings.js';
 import { servicesRouter } from './services.js';
 import { worksRouter } from './works.js';
@@ -17,6 +18,7 @@ import { integrationsRouter } from './integrations.js';
 import { analyticsRouter } from './analytics.js';
 import { storyRouter } from './story.js';
 import { clientsRouter } from './clients.js';
+import { reviewsRouter } from './reviews.js';
 
 export const adminRouter = Router();
 
@@ -83,6 +85,7 @@ adminRouter.use(verifyCsrf);
 adminRouter.use((req, res, next) => {
   const counts = countBookingsByStatus();
   res.locals.newBookings = counts.new ?? 0;
+  res.locals.pendingReviews = countPendingReviews();
   res.locals.studioName = getSettings().studio_name;
   res.locals.currentPath = req.baseUrl + req.path;
   next();
@@ -100,3 +103,4 @@ adminRouter.use(integrationsRouter);
 adminRouter.use(analyticsRouter);
 adminRouter.use(storyRouter);
 adminRouter.use(clientsRouter);
+adminRouter.use(reviewsRouter);

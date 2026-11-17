@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { createReview, deleteReview, listReviews, reorderReviews, updateReview } from '../../db/repos/catalog.js';
 import { getSecret, getSettings, saveSettings } from '../../db/repos/settings.js';
 import { maskToken } from './integrations.js';
 import { config } from '../../config.js';
 import { mapUrl } from '../../lib/format.js';
-import { idListSchema, reviewSchema, settingsSchema } from '../../validation/schemas.js';
+import { settingsSchema } from '../../validation/schemas.js';
 import { action, idParam, notFound } from './helpers.js';
 
 export const settingsRouter = Router();
@@ -36,7 +35,6 @@ settingsRouter.get('/settings', (_req, res) => {
     visitSteps: pad(settings.visit_steps, 3),
     rules: pad(settings.rules, 4),
     checklist: [...settings.checklist, '', ''].slice(0, Math.max(settings.checklist.length + 2, 5)).slice(0, 10),
-    reviews: listReviews(),
   });
 });
 
@@ -45,22 +43,3 @@ settingsRouter.post('/api/settings', (req, res, next) => {
   next();
 }, action(settingsSchema, (data) => saveSettings(data)));
 
-/* ---------- Отзывы ---------- */
-
-settingsRouter.post('/api/reviews', action(reviewSchema, (data) => ({ id: createReview(data), reload: true }), { message: 'Отзыв добавлен' }));
-
-settingsRouter.post('/api/reviews/reorder', action(idListSchema, ({ ids }) => reorderReviews(ids), { message: 'Порядок сохранён' }));
-
-settingsRouter.post(
-  '/api/reviews/:id',
-  action(reviewSchema, (data, req) => {
-    if (!updateReview(idParam(req), data)) throw notFound('Отзыв');
-  }),
-);
-
-settingsRouter.post(
-  '/api/reviews/:id/delete',
-  action(null, (_data, req) => {
-    if (!deleteReview(idParam(req))) throw notFound('Отзыв');
-  }, { message: 'Отзыв удалён' }),
-);
