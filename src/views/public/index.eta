@@ -282,7 +282,7 @@
       <div class="review-write" data-review>
         <div class="review-write__intro" data-review-intro>
           <p class="review-write__title">Были у меня на процедуре?</p>
-          <p class="review-write__text">Расскажите, как вам результат. Отзыв появится на сайте после проверки.</p>
+          <p class="review-write__text">Расскажите, как вам результат.</p>
           <button type="button" class="btn btn--dark" data-review-open aria-expanded="false" aria-controls="review-form">Оставить отзыв</button>
         </div>
 
