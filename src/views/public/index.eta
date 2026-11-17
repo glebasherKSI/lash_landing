@@ -318,7 +318,7 @@
 
         <div class="review-done" data-review-done hidden tabindex="-1">
           <p class="review-write__title">Спасибо за отзыв!</p>
-          <p class="review-write__text">Он появится на сайте, как только я его проверю.</p>
+          <p class="review-write__text">Мне очень приятно, что вы нашли время рассказать о процедуре.</p>
         </div>
       </div>
     </section>
