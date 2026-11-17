@@ -18,3 +18,16 @@ export const buildDaySlots = ({ hours, durationMin, stepMin, busy, earliestStart
 
 export const intervalsOverlap = (a, b) => a.start < b.end && b.start < a.end;
 
+/**
+ * Окна, которые реально можно предложить разным клиенткам в один день:
+ * жадно берём первый свободный слот, следующий — не раньше конца предыдущей процедуры.
+ */
+export const pickWindows = (slots) => {
+  const windows = [];
+  for (const slot of slots) {
+    if (!slot.available) continue;
+    if (windows.length && slot.start < windows.at(-1).end) continue;
+    windows.push(slot);
+  }
+  return windows;
+};

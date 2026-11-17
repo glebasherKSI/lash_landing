@@ -18,18 +18,21 @@ const DAY_GAP = { min: 18, max: 64 };
 // Размер окон подбирается под их количество: от крупных до компактных, пока всё не влезет
 // label — размер даты слева: при немногих окнах всё крупнее, без пустоты на картинке
 const SIZES = [
-  { font: 54, h: 104, min: 182, label: 46 },
-  { font: 48, h: 94, min: 166, label: 42 },
-  { font: 42, h: 84, min: 150, label: 38 },
-  { font: 38, h: 76, min: 136, label: 36 },
-  { font: 34, h: 68, min: 122, label: 34 },
-  { font: 31, h: 60, min: 110, label: 32 },
-  { font: 28, h: 54, min: 96, label: 30 },
-  { font: 26, h: 50, min: 88, label: 28 },
-  { font: 24, h: 46, min: 80, label: 27 },
+  { font: 54, h: 104, min: 182, label: 58 },
+  { font: 48, h: 94, min: 166, label: 54 },
+  { font: 42, h: 84, min: 150, label: 50 },
+  { font: 38, h: 76, min: 136, label: 46 },
+  { font: 34, h: 68, min: 122, label: 42 },
+  { font: 31, h: 60, min: 110, label: 40 },
+  { font: 28, h: 54, min: 96, label: 36 },
+  { font: 26, h: 50, min: 88, label: 34 },
+  { font: 24, h: 46, min: 80, label: 32 },
 ];
-// ширина колонки с датой под самую длинную «30 сентября»
-const labelWidth = (size) => Math.round(size.label * 6.6);
+// Ширина колонки с датой — по самой длинной дате на картинке: крупные даты не съедают место у окон
+const withLabelWidth = (ctx, size, rows) => {
+  setFont(ctx, 500, size.label);
+  return { ...size, labelW: Math.max(0, ...rows.map((day) => ctx.measureText(day.label).width)) + 36 };
+};
 
 // поля внутри окна — от высоты: в мелком размере ячейки плотнее и в строку их влезает больше
 const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label).width + size.h * 0.5);
@@ -37,7 +40,7 @@ const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label
 /** Окна дня по строкам на ширину картинки; не влезло в maxLines — последнее окно меняется на «+N». */
 export const layoutDay = (ctx, times, size, maxLines = Infinity) => {
   setFont(ctx, 500, size.font);
-  const area = W - PAD - (PAD + labelWidth(size));
+  const area = W - PAD - (PAD + size.labelW);
   const lines = [[]];
   let x = 0;
   for (let i = 0; i < times.length; i++) {
@@ -72,13 +75,14 @@ export const planDays = (ctx, rows) => {
   const avail = DAYS_BOTTOM - DAYS_TOP;
   const fits = (plans, size) => rowHeight(plans, size) * plans.length + DAY_GAP.min * (plans.length - 1) <= avail;
   for (const singleLine of [true, false]) {
-    for (const size of SIZES) {
+    for (const base of SIZES) {
+      const size = withLabelWidth(ctx, base, rows);
       const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size) }));
       if (singleLine && plans.some((p) => p.lines.length > 1)) continue;
       if (fits(plans, size)) return { size, plans };
     }
   }
-  const size = SIZES.at(-1);
+  const size = withLabelWidth(ctx, SIZES.at(-1), rows);
   return { size, plans: rows.map((day) => ({ day, lines: layoutDay(ctx, day.times, size, 2) })) };
 };
 
@@ -184,7 +188,7 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
 
     setFont(ctx, 500, size.font);
     lines.forEach((line, li) => {
-      let x = PAD + labelWidth(size);
+      let x = PAD + size.labelW;
       const top = y + li * (size.h + LINE_GAP);
       for (const chip of line) {
         roundRect(ctx, x, top, chip.w, size.h, size.h / 2);

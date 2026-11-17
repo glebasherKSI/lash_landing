@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDaySlots } from '../src/lib/slots.js';
+import { buildDaySlots, pickWindows } from '../src/lib/slots.js';
 
 const hours = { start: 600, end: 1140 }; // 10:00–19:00
 const free = (slots) => slots.filter((s) => s.available).map((s) => s.start);
@@ -31,4 +31,11 @@ test('сегодня прошедшее время не предлагается
 test('шаг сетки берётся из настроек', () => {
   const slots = buildDaySlots({ hours, durationMin: 30, stepMin: 45, busy: [] });
   assert.deepEqual(slots.slice(0, 3).map((s) => s.start), [600, 645, 690]);
+});
+
+test('окна для сторис не пересекаются между собой', () => {
+  const busy = [{ start: 780, end: 840 }]; // 13:00–14:00
+  const slots = buildDaySlots({ hours, durationMin: 150, stepMin: 30, busy });
+  // 10:00–12:30, затем 14:00 (12:30 и 13:30 задевают запись в 13:00), затем 16:30–19:00 ровно до закрытия
+  assert.deepEqual(pickWindows(slots).map((s) => s.start), [600, 840, 990]);
 });
