@@ -90,6 +90,9 @@ const THEMES = {
   pink: { bg: ['#F6DDE2', '#E8B9C4'], text: '#131315', muted: '#4A4A52', chip: 'rgba(255,255,255,.82)', chipText: '#131315', pill: 'rgba(255,255,255,.55)', lash: 'rgba(19,19,21,.10)' },
   light: { bg: ['#F7F7F8', '#EDEEF0'], text: '#131315', muted: '#62626A', chip: 'accent', chipText: '#131315', pill: '#E4E5E8', lash: 'rgba(19,19,21,.08)', glow: true },
   dark: { bg: ['#2B2B33', '#131315'], text: '#FFFFFF', muted: '#B9B9C2', chip: 'accent', chipText: '#131315', pill: 'rgba(255,255,255,.10)', lash: 'rgba(242,210,216,.16)' },
+  peach: { bg: ['#FBE6D8', '#F2BFA4'], text: '#2A1A12', muted: '#6B4A3A', chip: 'rgba(255,255,255,.82)', chipText: '#2A1A12', pill: 'rgba(255,255,255,.55)', lash: 'rgba(42,26,18,.10)' },
+  lavender: { bg: ['#EEE7F8', '#C9B8E8'], text: '#1E1630', muted: '#574B70', chip: 'rgba(255,255,255,.82)', chipText: '#1E1630', pill: 'rgba(255,255,255,.55)', lash: 'rgba(30,22,48,.10)' },
+  berry: { bg: ['#6A2440', '#2A0E18'], text: '#FFFFFF', muted: '#EBC5D1', chip: '#F6DDE2', chipText: '#2A0E18', pill: 'rgba(255,255,255,.12)', lash: 'rgba(246,221,226,.18)' },
 };
 
 const roundRect = (ctx, x, y, w, h, r) => {

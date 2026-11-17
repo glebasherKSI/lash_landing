@@ -23,6 +23,9 @@
         <button type="button" class="story-theme story-theme--pink" data-theme="pink" aria-pressed="true"><span>Розовое</span></button>
         <button type="button" class="story-theme story-theme--light" data-theme="light" aria-pressed="false"><span>Светлое</span></button>
         <button type="button" class="story-theme story-theme--dark" data-theme="dark" aria-pressed="false"><span>Тёмное</span></button>
+        <button type="button" class="story-theme story-theme--peach" data-theme="peach" aria-pressed="false"><span>Персик</span></button>
+        <button type="button" class="story-theme story-theme--lavender" data-theme="lavender" aria-pressed="false"><span>Лаванда</span></button>
+        <button type="button" class="story-theme story-theme--berry" data-theme="berry" aria-pressed="false"><span>Ягодное</span></button>
       </div>
     </div>
   </section>
