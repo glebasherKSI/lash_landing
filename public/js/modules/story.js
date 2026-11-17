@@ -6,17 +6,90 @@ const W = 1080;
 const H = 1920;
 const PAD = 88;
 // Зоны Instagram: сверху имя аккаунта, снизу поле ответа — туда ничего важного не ставим
-const CONTENT_TOP = 250;
-const DAYS_TOP = 700;
-const DAYS_BOTTOM = 1300;
+const CONTENT_TOP = 200;
+const DAYS_TOP = 680;
+const DAYS_BOTTOM = 1440;
 // Пустое место под стикер «Ссылка» (кнопку записи мастер ставит в Instagram сама)
-export const STICKER_ZONE = { x: 190, y: 1390, w: 700, h: 220 };
-const HINT_Y = 1352;
-const FOOTER_Y = 1668;
-const ROW_H = 76;
-const ROW_GAP = 10;
-const LABEL_W = 230;
-const MAX_CHIPS = 4;
+export const STICKER_ZONE = { x: 190, y: 1536, w: 700, h: 200 };
+const HINT_Y = 1500;
+const FOOTER_Y = 1800;
+const CHIP_GAP = 12;
+const LINE_GAP = 12;
+const DAY_GAP = { min: 18, max: 64 };
+// Размер окон подбирается под их количество: от крупных до компактных, пока всё не влезет
+// label — размер даты слева: при немногих окнах всё крупнее, без пустоты на картинке
+const SIZES = [
+  { font: 54, h: 104, min: 182, label: 46 },
+  { font: 48, h: 94, min: 166, label: 42 },
+  { font: 42, h: 84, min: 150, label: 38 },
+  { font: 38, h: 76, min: 136, label: 36 },
+  { font: 34, h: 68, min: 122, label: 34 },
+  { font: 31, h: 60, min: 110, label: 32 },
+  { font: 28, h: 54, min: 100, label: 30 },
+];
+// ширина колонки с датой под самую длинную «30 сентября»
+const labelWidth = (size) => Math.round(size.label * 6.6);
+
+const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label).width + 44);
+
+/** Окна дня по строкам на ширину картинки; не влезло в maxLines — последнее окно меняется на «+N». */
+export const layoutDay = (ctx, times, size, maxLines = Infinity) => {
+  setFont(ctx, 500, size.font);
+  const area = W - PAD - (PAD + labelWidth(size));
+  const lines = [[]];
+  let x = 0;
+  for (let i = 0; i < times.length; i++) {
+    const w = chipWidth(ctx, times[i], size);
+    if (lines.at(-1).length && x + w > area) {
+      if (lines.length === maxLines) {
+        const line = lines.at(-1);
+        line.pop();
+        const label = `+${times.length - i + 1}`;
+        line.push({ label, w: chipWidth(ctx, label, size), extra: true });
+        break;
+      }
+      lines.push([]);
+      x = 0;
+    }
+    lines.at(-1).push({ label: times[i], w });
+    x += w + CHIP_GAP;
+  }
+  return lines;
+};
+
+const dayHeight = (lines, size) => lines.length * size.h + (lines.length - 1) * LINE_GAP;
+
+const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+
+/** «10:00, 11:00, 12:00, 13:00, 15:00» при шаге 60 → «10:00–13:00», «15:00»: подряд от трёх окон — диапазоном. */
+export const compressTimes = (times, step) => {
+  const out = [];
+  for (let i = 0; i < times.length; ) {
+    let j = i;
+    while (j + 1 < times.length && toMinutes(times[j + 1]) - toMinutes(times[j]) === step) j++;
+    if (j - i >= 2) out.push(`${times[i]}–${times[j]}`);
+    else out.push(...times.slice(i, j + 1));
+    i = j + 1;
+  }
+  return out;
+};
+
+/**
+ * Самый крупный размер, при котором все дни влезают. Не влезают отдельными окнами —
+ * подряд идущие сжимаются в диапазоны; совсем крайний случай — по строке на день и «+N».
+ */
+export const planDays = (ctx, rows, step) => {
+  const avail = DAYS_BOTTOM - DAYS_TOP;
+  const fits = (plans, size) => plans.reduce((sum, p) => sum + dayHeight(p.lines, size), 0) + DAY_GAP.min * (plans.length - 1) <= avail;
+  for (const ranges of [false, true]) {
+    for (const size of SIZES) {
+      const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, ranges ? compressTimes(day.times, step) : day.times, size) }));
+      if (fits(plans, size)) return { size, plans, ranges: ranges && plans.some((p) => p.lines.flat().some((c) => c.label.includes('–'))) };
+    }
+  }
+  const size = SIZES.at(-1);
+  return { size, plans: rows.map((day) => ({ day, lines: layoutDay(ctx, compressTimes(day.times, step), size, 1) })), ranges: true };
+};
 
 const THEMES = {
   pink: { bg: ['#F6DDE2', '#E8B9C4'], text: '#131315', muted: '#4A4A52', chip: 'rgba(255,255,255,.82)', chipText: '#131315', pill: 'rgba(255,255,255,.55)', lash: 'rgba(19,19,21,.10)' },
@@ -42,7 +115,7 @@ const periodLabel = (days) => {
   return first.month === last.month ? `${first.day}–${last.day} ${last.month}` : `${first.label} – ${last.label}`;
 };
 
-export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => {
+export const drawStory = (canvas, { days, step = 60, theme: themeName, brand, hidden }) => {
   const ctx = canvas.getContext('2d');
   const t = THEMES[themeName];
   const chipBg = t.chip === 'accent' ? brand.accent : t.chip;
@@ -86,42 +159,51 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
   // Заголовок, как на первом экране сайта
   ctx.textBaseline = 'alphabetic';
   setFont(ctx, 300, 132, -2);
-  ctx.fillText('СВОБОДНЫЕ', PAD - 6, 470);
-  ctx.fillText('ОКОШКИ', PAD - 6, 596);
+  ctx.fillText('СВОБОДНЫЕ', PAD - 6, 420);
+  ctx.fillText('ОКОШКИ', PAD - 6, 546);
   setFont(ctx, 500, 40);
   ctx.fillStyle = t.muted;
   // Период — по дням, которые реально есть на картинке (выходные не показываются)
   const rows = days.filter((d) => d.working);
-  ctx.fillText(periodLabel(rows.length ? rows : days), PAD, 660);
+  ctx.fillText(periodLabel(rows.length ? rows : days), PAD, 612);
 
-  // Дни: дата слева, окна справа
-  const blockH = rows.length * (ROW_H + ROW_GAP) - ROW_GAP;
-  let y = DAYS_TOP + Math.max(0, (DAYS_BOTTOM - DAYS_TOP - blockH) / 2);
-  for (const day of rows) {
-    const times = day.times.filter((time) => !hidden.has(`${day.date}|${time}`));
-    ctx.textBaseline = 'alphabetic';
-    setFont(ctx, 500, 26, 2);
+  // Дни: дата слева, окна справа; блок растягивается на всю высоту между заголовком и ссылкой
+  // полностью занятые дни клиенткам ничего не дают — на картинку не попадают
+  const visible = rows
+    .map((day) => ({ ...day, times: day.times.filter((time) => !hidden.has(`${day.date}|${time}`)) }))
+    .filter((day) => day.times.length);
+  const { size, plans, ranges } = planDays(ctx, visible, step);
+  if (ranges) {
+    // что значит диапазон — одной строкой под периодом
+    setFont(ctx, 400, 30);
     ctx.fillStyle = t.muted;
-    ctx.fillText(day.weekday.toUpperCase(), PAD, y + 30);
-    setFont(ctx, 500, 36);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`«10:00–13:00» — начало в любое время, ${step === 60 ? 'каждый час' : `каждые ${step} мин`}`, PAD, 660);
+  }
+  const heights = plans.map((p) => dayHeight(p.lines, size));
+  const sumH = heights.reduce((a, b) => a + b, 0);
+  const avail = DAYS_BOTTOM - DAYS_TOP;
+  const gap = plans.length > 1 ? Math.min(DAY_GAP.max, Math.max(DAY_GAP.min, (avail - sumH) / (plans.length - 1))) : 0;
+  let y = DAYS_TOP + Math.max(0, (avail - sumH - gap * (plans.length - 1)) / 2);
+  plans.forEach(({ day, lines }, i) => {
+    // подпись дня — по центру первой строки окон
+    const cy = y + size.h / 2;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    setFont(ctx, 500, Math.round(size.label * 0.72), 2);
+    ctx.fillStyle = t.muted;
+    ctx.fillText(day.weekday.toUpperCase(), PAD, cy - size.label * 0.22);
+    setFont(ctx, 500, size.label);
     ctx.fillStyle = t.text;
-    ctx.fillText(day.label, PAD, y + 70);
+    ctx.fillText(day.label, PAD, cy + size.label * 0.9);
 
-    let x = PAD + LABEL_W;
-    if (!times.length) {
-      setFont(ctx, 400, 34);
-      ctx.fillStyle = t.muted;
-      ctx.textBaseline = 'middle';
-      ctx.fillText('всё занято', x, y + ROW_H / 2);
-    } else {
-      const shown = times.length > MAX_CHIPS ? times.slice(0, MAX_CHIPS - 1) : times;
-      const chips = times.length > MAX_CHIPS ? [...shown, `+${times.length - shown.length}`] : shown;
-      for (const label of chips) {
-        const extra = label.startsWith('+');
-        setFont(ctx, 500, 38);
-        const chipW = Math.max(132, ctx.measureText(label).width + 44);
-        roundRect(ctx, x, y, chipW, ROW_H, ROW_H / 2);
-        if (extra) {
+    setFont(ctx, 500, size.font);
+    lines.forEach((line, li) => {
+      let x = PAD + labelWidth(size);
+      const top = y + li * (size.h + LINE_GAP);
+      for (const chip of line) {
+        roundRect(ctx, x, top, chip.w, size.h, size.h / 2);
+        if (chip.extra) {
           ctx.strokeStyle = t.muted;
           ctx.lineWidth = 2;
           ctx.stroke();
@@ -129,16 +211,16 @@ export const drawStory = (canvas, { days, theme: themeName, brand, hidden }) => 
           ctx.fillStyle = chipBg;
           ctx.fill();
         }
-        ctx.fillStyle = extra ? t.text : t.chipText;
+        ctx.fillStyle = chip.extra ? t.text : t.chipText;
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
-        ctx.fillText(label, x + chipW / 2, y + ROW_H / 2 + 2);
-        ctx.textAlign = 'left';
-        x += chipW + 12;
+        ctx.fillText(chip.label, x + chip.w / 2, top + size.h / 2 + 2);
+        x += chip.w + CHIP_GAP;
       }
-    }
-    y += ROW_H + ROW_GAP;
-  }
+    });
+    ctx.textAlign = 'left';
+    y += heights[i] + gap;
+  });
 
   // Подсказка над местом для стикера и адрес внизу
   ctx.textAlign = 'center';
