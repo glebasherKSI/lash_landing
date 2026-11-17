@@ -29,6 +29,7 @@ const SIZES = [
 ];
 // ширина колонки с датой под самую длинную «30 сентября»
 const labelWidth = (size) => Math.round(size.label * 6.6);
+const MIN_SINGLE_FONT = 38;
 
 const chipWidth = (ctx, label, size) => Math.max(size.min, ctx.measureText(label).width + 44);
 
@@ -82,7 +83,8 @@ export const planDays = (ctx, rows, step) => {
   const avail = DAYS_BOTTOM - DAYS_TOP;
   const fits = (plans, size) => plans.reduce((sum, p) => sum + dayHeight(p.lines, size), 0) + DAY_GAP.min * (plans.length - 1) <= avail;
   for (const ranges of [false, true]) {
-    for (const size of SIZES) {
+    // отдельные окна — пока они крупные; мелкая россыпь читается хуже диапазонов
+    for (const size of ranges ? SIZES : SIZES.filter((s) => s.font >= MIN_SINGLE_FONT)) {
       const plans = rows.map((day) => ({ day, lines: layoutDay(ctx, ranges ? compressTimes(day.times, step) : day.times, size) }));
       if (fits(plans, size)) return { size, plans, ranges: ranges && plans.some((p) => p.lines.flat().some((c) => c.label.includes('–'))) };
     }
