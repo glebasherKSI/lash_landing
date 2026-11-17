@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&display=swap">
   <link rel="stylesheet" href="<%= it.asset('/css/site.css') %>">
 <% if (it.settings?.accent_color) { %>
-  <style nonce="<%= it.cspNonce %>">:root{--accent:<%= it.settings.accent_color %>}<% if (it.heroWork) { %>.photo-card__img{object-position:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}.photo-card__media{transform-origin:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}<% } %></style>
+  <style nonce="<%= it.cspNonce %>">:root{--accent:<%= it.settings.accent_color %>}<% if (it.titleLines) { %>.hero__title{--title-chars:<%= Math.max(...it.titleLines.map((l) => l.length)) %>}<% } %><% if (it.heroWork) { %>.photo-card__img{object-position:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}.photo-card__media{transform-origin:<%= it.heroWork.focus_x %>% <%= it.heroWork.focus_y %>%}<% } %></style>
 <% } %>
 <% if (it.preloadImage) { %>
   <link rel="preload" as="image" href="<%= it.preloadImage.href %>" imagesrcset="<%= it.preloadImage.srcset %>" imagesizes="<%= it.preloadImage.sizes %>" fetchpriority="high">

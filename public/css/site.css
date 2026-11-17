@@ -190,9 +190,12 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
 .pill-nav .pill-nav__accent { background: var(--accent); }
 .pill-nav .pill-nav__accent:hover { background: var(--accent); filter: saturate(1.3); }
 
-.hero__copy { display: grid; gap: 20px; margin-top: auto; }
+/* Заголовок подстраивается под ширину колонки и самую длинную строку (текст меняется в админке),
+   поэтому длинное слово не упирается в фото */
+.hero__copy { display: grid; gap: 20px; margin-top: auto; container-type: inline-size; }
 .hero__title {
   font-size: clamp(40px, 5.6vw, 80px);
+  font-size: clamp(32px, calc(100cqi / (var(--title-chars, 11) * 0.74)), 80px);
   font-weight: 300;
   line-height: .98;
   text-transform: uppercase;
