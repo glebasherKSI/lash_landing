@@ -5,6 +5,7 @@ import { initBooking } from './modules/booking.js';
 import { initMotion } from './modules/motion.js';
 import { initFloatCta } from './modules/float-cta.js';
 import { mountHeroWindow } from './modules/hero-window.js';
+import { initAnchorScroll } from './modules/anchor-scroll.js';
 
 const pageData = JSON.parse(document.getElementById('page-data')?.textContent || '{}');
 
@@ -17,6 +18,7 @@ initTabs();
 initEffect(pageData, { onEffectChosen: (slug) => booking?.setEffect(slug) });
 initLightbox();
 initFloatCta();
+initAnchorScroll();
 
 // Любая ссылка с data-pick-service/date/time выбирает это в форме записи.
 document.addEventListener('click', (event) => {
