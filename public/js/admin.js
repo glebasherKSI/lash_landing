@@ -735,6 +735,7 @@ if (quickForm) {
   const nameInput = quickForm.elements.client_name;
   const contactInput = quickForm.elements.contact;
   const DAY_NAMES = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  const MONTH_NAMES = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
   let state = {};
   let request = 0;
 
@@ -793,6 +794,13 @@ if (quickForm) {
     const pick = keep ?? res.days.find((d) => d.free) ?? res.days[0];
     let picked = null;
     for (const day of res.days) {
+      // метка месяца в начале ленты и перед каждым 1-м числом
+      if (day === res.days[0] || day.day === 1) {
+        const month = document.createElement('span');
+        month.className = 'quick-month';
+        month.textContent = MONTH_NAMES[Number(day.iso.slice(5, 7)) - 1];
+        datesBox.append(month);
+      }
       const top = day.offset === 0 ? 'сегодня' : day.offset === 1 ? 'завтра' : DAY_NAMES[new Date(`${day.iso}T12:00`).getDay()];
       const bottom = !day.working ? 'выходной' : day.free ? `${day.free} окон` : 'занято';
       const chip = option('date_pick', day.iso, `<small>${top}</small><b>${day.day}</b><small>${bottom}</small>`, {

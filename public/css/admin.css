@@ -646,6 +646,10 @@
   margin: 0 -20px; padding: 2px 20px 4px; scroll-padding: 0 20px;
 }
 .quick-dates::-webkit-scrollbar { display: none; }
+.quick-month {
+  flex: none; align-self: stretch; display: grid; place-items: center; writing-mode: vertical-rl; transform: rotate(180deg);
+  font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--muted);
+}
 .quick-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
 .quick-chip { position: relative; flex: none; scroll-snap-align: start; }
 .quick-chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }

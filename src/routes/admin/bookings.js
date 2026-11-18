@@ -107,17 +107,17 @@ bookingsRouter.get('/bookings', (req, res) => {
 });
 
 // Быстрая запись в админке: дальше горизонта онлайн-записи и для скрытых услуг тоже
-const ADMIN_DAYS_AHEAD = 30;
+const ADMIN_DAYS_AHEAD = 90;
 
 bookingsRouter.get('/api/slots', (req, res) => {
   const service = getService(Number(req.query.service_id));
   if (!service) return res.status(404).json({ ok: false, message: 'Услуга не найдена' });
-  const stepMin = getSettings().slot_step_min;
+  const { slot_step_min: stepMin, booking_horizon_days: horizon } = getSettings();
   const date = String(req.query.date ?? '');
 
   if (!date) {
     const today = todayISO();
-    const days = Array.from({ length: ADMIN_DAYS_AHEAD }, (_, i) => {
+    const days = Array.from({ length: Math.max(ADMIN_DAYS_AHEAD, horizon) }, (_, i) => {
       const iso = addDays(today, i);
       const working = Boolean(getDayHours(iso));
       const free = working ? getDaySlots({ date: iso, durationMin: service.duration_min, stepMin }).filter((s) => s.available).length : 0;
