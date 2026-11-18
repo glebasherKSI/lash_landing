@@ -646,10 +646,6 @@
   margin: 0 -20px; padding: 2px 20px 4px; scroll-padding: 0 20px;
 }
 .quick-dates::-webkit-scrollbar { display: none; }
-.quick-month {
-  flex: none; align-self: stretch; display: grid; place-items: center; writing-mode: vertical-rl; transform: rotate(180deg);
-  font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--muted);
-}
 .quick-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
 .quick-chip { position: relative; flex: none; scroll-snap-align: start; }
 .quick-chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
@@ -658,8 +654,9 @@
   background: var(--white); box-shadow: inset 0 0 0 1px var(--line); font-variant-numeric: tabular-nums; cursor: pointer;
   transition: background-color .2s, color .2s, transform .15s;
 }
-.quick-dates .quick-chip span { width: 70px; min-height: 76px; gap: 0; }
+.quick-dates .quick-chip span { width: 76px; min-height: 76px; gap: 0; }
 .quick-chip b { font-size: 22px; font-weight: 400; line-height: 1.15; }
+.quick-chip b i { margin-left: 3px; font-size: 13px; font-style: normal; }
 .quick-chip small { font-size: 12px; color: var(--muted); }
 .quick-chip:active span { transform: scale(.94); }
 .quick-chip input:checked + span { background: var(--text); color: var(--white); box-shadow: none; }
